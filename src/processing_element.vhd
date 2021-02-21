@@ -10,10 +10,8 @@ entity processing_element is
     -- TODO: input bitwidth, for now = 1
 
     C_KERNEL_SIZE   : integer range 2 to 3 := 2;
-    C_INPUT_CHANNEL : integer;
+    C_INPUT_CHANNEL : integer
     -- C_OUTPUT_CHANNEL : integer; --> 1 output channel
-
-    C_POST_CONVOLUTION_BITWIDTH : integer := 8
   );
   port (
     isl_clk   : in    std_logic;

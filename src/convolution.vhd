@@ -3,14 +3,15 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
 
+library util;
+  use util.math_pkg.all;
+
 entity convolution is
   generic (
     -- TODO: input bitwidth, for now = 1
 
     C_KERNEL_SIZE   : integer range 2 to 7 := 2;
-    C_INPUT_CHANNEL : integer              := 1;
-
-    C_POST_CONVOLUTION_BITWIDTH : integer := 8
+    C_INPUT_CHANNEL : integer              := 1
   );
   port (
     isl_clk   : in    std_logic;
@@ -18,7 +19,7 @@ entity convolution is
     islv_data : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
     -- maybe weights + 1 for bias
     islv_weights : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
-    oslv_data    : out   std_logic_vector(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
+    oslv_data    : out   std_logic_vector(log2(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL + 1) - 1 downto 0);
     osl_valid    : out   std_logic
   );
 end entity convolution;
@@ -35,7 +36,6 @@ begin
 
   proc_convolution : process (isl_clk) is
 
-    -- TODO: log2(islv_data'range)
     variable usig_ones_count : unsigned(oslv_data'range);
 
   begin

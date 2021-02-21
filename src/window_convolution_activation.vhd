@@ -4,6 +4,8 @@ library ieee;
   use ieee.numeric_std.all;
 
 library cnn_lib;
+library util;
+  use util.math_pkg.all;
 
 library window_ctrl_lib;
 
@@ -18,9 +20,7 @@ entity window_convolution_activation is
     C_OUTPUT_CHANNEL : integer;
 
     C_IMG_WIDTH  : integer;
-    C_IMG_HEIGHT : integer;
-
-    C_POST_CONVOLUTION_BITWIDTH : integer := 8
+    C_IMG_HEIGHT : integer
   );
   port (
     isl_clk   : in    std_logic;
@@ -29,7 +29,7 @@ entity window_convolution_activation is
     islv_data : in    std_logic_vector(C_INPUT_CHANNEL - 1 downto 0);
     -- islv_weights and islv_threshold are constants
     islv_weights   : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL * C_OUTPUT_CHANNEL - 1 downto 0);
-    islv_threshold : in    std_logic_vector(C_POST_CONVOLUTION_BITWIDTH * C_OUTPUT_CHANNEL - 1 downto 0);
+    islv_threshold : in    std_logic_vector(log2(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL + 1) * C_OUTPUT_CHANNEL - 1 downto 0);
     oslv_data      : out   std_logic_vector(C_OUTPUT_CHANNEL - 1 downto 0);
     osl_valid      : out   std_logic
   );
@@ -44,6 +44,7 @@ architecture behavioral of window_convolution_activation is
 
   type t_slv_array_1d is array(natural range <>) of std_logic_vector;
 
+  constant C_POST_CONVOLUTION_BITWIDTH : integer := log2(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL + 1);
   signal a_data_convolution : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
 
   signal sl_valid_batch_normalization : std_logic := '0';
@@ -98,8 +99,7 @@ begin
     i_convolution : entity cnn_lib.convolution
       generic map (
         C_KERNEL_SIZE               => C_KERNEL_SIZE,
-        C_INPUT_CHANNEL             => C_INPUT_CHANNEL,
-        C_POST_CONVOLUTION_BITWIDTH => C_POST_CONVOLUTION_BITWIDTH
+        C_INPUT_CHANNEL             => C_INPUT_CHANNEL
       )
       port map (
         isl_clk      => isl_clk,
@@ -109,11 +109,9 @@ begin
         oslv_data    => a_data_convolution(output_channel),
         osl_valid    => sl_valid_convolution
       );
-
-    -- TODO: output channel increments fastest, not slowest
+    -- output channel increments fastest
     a_weights(output_channel) <= get_fastest_increment(islv_weights, output_channel, C_OUTPUT_CHANNEL);
 
-    -- one batch normalization for each output channel
     i_batch_normalization : entity cnn_lib.batch_normalization
       generic map (
         C_POST_CONVOLUTION_BITWIDTH => C_POST_CONVOLUTION_BITWIDTH

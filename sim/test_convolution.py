@@ -40,9 +40,7 @@ async def run_test(dut):
         def output_data(self) -> int:
             ones_count = 0
             for act, weight in zip(self.input_activations, self.input_weights):
-                ones_count = ones_count + (
-                    act and weight
-                )  # TODO: should be xnor: (not (act ^ weight))
+                ones_count = ones_count + (not (act ^ weight))
             return ones_count
 
     input_channel = dut.C_INPUT_CHANNEL.value.integer

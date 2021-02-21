@@ -42,7 +42,6 @@ async def run_test(dut):
         dut.C_INPUT_CHANNEL.value.integer,
     )
     output_channel = dut.C_OUTPUT_CHANNEL.value.integer
-    post_convolution_bitwidth = dut.C_POST_CONVOLUTION_BITWIDTH.value.integer
 
     # define the reference model
     batch_shape = (1,) + image_shape
@@ -120,7 +119,6 @@ async def run_test(dut):
                 # use batch normalization as activation
                 # see also: https://arxiv.org/pdf/1612.07119.pdf, 4.2.2 Batchnorm-activation as Threshold
                 threshold_batchnorm = mean - (beta / (variance * epsilon - gamma))
-                print(threshold_batchnorm)
 
                 # Conversion from LARQ format [-1, 1] to pocket-bnn format [0, 1] (positive only):
                 # make the threshold compatible to positive only values
@@ -131,7 +129,7 @@ async def run_test(dut):
                 threshold.append(int(threshold_pos))
 
             return concatenate_integers(
-                self.replace_minus(threshold), bitwidth=post_convolution_bitwidth
+                self.replace_minus(threshold), bitwidth=math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1))
             )
 
     cases = (
@@ -220,7 +218,6 @@ def test_window_convolution_activation(record_waveform, kernel_size):
         "C_OUTPUT_CHANNEL": 8,
         "C_IMG_WIDTH": 4,
         "C_IMG_HEIGHT": 4,
-        "C_POST_CONVOLUTION_BITWIDTH": 8,
     }
     run(
         vhdl_sources=get_files(
