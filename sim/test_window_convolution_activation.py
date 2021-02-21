@@ -129,7 +129,8 @@ async def run_test(dut):
                 threshold.append(int(threshold_pos))
 
             return concatenate_integers(
-                self.replace_minus(threshold), bitwidth=math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1))
+                self.replace_minus(threshold),
+                bitwidth=math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1)),
             )
 
     cases = (

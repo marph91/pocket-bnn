@@ -23,6 +23,15 @@ architecture behavioral of maximum_pooling is
 
 begin
 
+  proc_output_valid : process (isl_clk) is
+  begin
+
+    if (rising_edge(isl_clk)) then
+      sl_valid_out <= isl_valid;
+    end if;
+
+  end process proc_output_valid;
+
   gen_channel : for channel in 0 to C_CHANNEL - 1 generate
 
     proc_maximum_pooling : process (isl_clk) is
@@ -32,21 +41,12 @@ begin
     begin
 
       if (rising_edge(isl_clk)) then
-        sl_valid_out <= '0';
-
         if (isl_valid = '1') then
-          sl_valid_out <= '1';
-
-          -- report "aaa: " & to_string(islv_data(31 downto 24)) & " " & to_string(islv_data(23 downto 16))
-          --   & " " & to_string(islv_data(15 downto 8)) & " " & to_string(islv_data(7 downto 0));
           for col in 0 to C_KERNEL_SIZE - 1 loop
             for row in 0 to C_KERNEL_SIZE - 1 loop
               slv_roi(col + row * C_KERNEL_SIZE) := islv_data(channel + col * C_CHANNEL + row * C_CHANNEL * C_KERNEL_SIZE);
-              -- report "bbb: " & to_string(channel + col * C_CHANNEL + row * C_CHANNEL * C_KERNEL_SIZE) & " " & to_string(channel) & " " & to_string(row) & " " & to_string(col) & " " & to_string(slv_roi(col + row * C_KERNEL_SIZE));
             end loop;
           end loop;
-
-          -- report "ccc: " & to_string(slv_roi) & " " & to_string(slv_roi = (slv_roi'range => '0'));
 
           if (slv_roi = (slv_roi'range => '0')) then
             slv_data_out(channel) <= '0';

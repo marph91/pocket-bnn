@@ -1,3 +1,4 @@
+build
 sim_build
 .mypy_cache
 .pytest_cache

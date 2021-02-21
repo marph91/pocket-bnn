@@ -4,6 +4,7 @@ library ieee;
   use ieee.numeric_std.all;
 
 library cnn_lib;
+
 library util;
   use util.math_pkg.all;
 
@@ -45,7 +46,7 @@ architecture behavioral of window_convolution_activation is
   type t_slv_array_1d is array(natural range <>) of std_logic_vector;
 
   constant C_POST_CONVOLUTION_BITWIDTH : integer := log2(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL + 1);
-  signal a_data_convolution : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
+  signal   a_data_convolution          : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
 
   signal sl_valid_batch_normalization : std_logic := '0';
   signal slv_data_batch_normalization : std_logic_vector(C_OUTPUT_CHANNEL * 1 - 1 downto 0);
@@ -98,8 +99,8 @@ begin
 
     i_convolution : entity cnn_lib.convolution
       generic map (
-        C_KERNEL_SIZE               => C_KERNEL_SIZE,
-        C_INPUT_CHANNEL             => C_INPUT_CHANNEL
+        C_KERNEL_SIZE   => C_KERNEL_SIZE,
+        C_INPUT_CHANNEL => C_INPUT_CHANNEL
       )
       port map (
         isl_clk      => isl_clk,
@@ -109,6 +110,7 @@ begin
         oslv_data    => a_data_convolution(output_channel),
         osl_valid    => sl_valid_convolution
       );
+
     -- output channel increments fastest
     a_weights(output_channel) <= get_fastest_increment(islv_weights, output_channel, C_OUTPUT_CHANNEL);
 
