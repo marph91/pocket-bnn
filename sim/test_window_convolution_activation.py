@@ -26,6 +26,10 @@ from test_utils.general import (
 random.seed(100)  # TODO: fixture
 
 
+def tensor_to_list(tensor):
+    return list(tensor.numpy().astype("uint8").flat)
+
+
 @cocotb.test()
 async def run_test(dut):
     # layer parameter
@@ -44,23 +48,48 @@ async def run_test(dut):
     batch_shape = (1,) + image_shape
     input_ = tf.keras.Input(batch_shape=batch_shape, name="img")
     x = lq.layers.QuantConv2D(
-        output_channel, kernel_size, strides=stride, use_bias=False, name="test_conv"
+        output_channel,
+        kernel_size,
+        strides=stride,
+        use_bias=False,
+        name="test_conv",
     )(input_)
     x = tf.keras.layers.BatchNormalization(name="test_batchnorm")(x)
     output_ = lq.quantizers.SteHeaviside()(x)
     model = tf.keras.Model(inputs=input_, outputs=output_)
+
+    # TODO: Try to set realistic batchnorm parameter.
+    # beta=offset, gamma=scale, mean, variance
+    # original_batch_weights = model.get_layer("test_batchnorm").get_weights()
+    ## np.array([kernel_size[0] ** 2 * image_shape[2] / 2]
+    # model.get_layer("test_batchnorm").set_weights(
+    # [
+    # original_batch_weights[0],
+    # original_batch_weights[1],
+    # np.array([16] * output_channel),
+    # original_batch_weights[3],
+    # ]
+    # )
 
     # define the testcases
     @dataclass
     class Testcase:
         input_image: List[int]
         weights: List[int]
-        threshold: List[int]
+
+        @staticmethod
+        def replace_minus(values):
+            """Convert from LARQ format [-1, 1] to pocket-bnn format [0, 1].
+            This gets compensated by batchnorm/activation later.
+            """
+            return [0 if v == -1 else v for v in values]
 
         @property
         def input_data(self) -> int:
             # send all channels (i. e. one pixel) at a time
-            return concatenate_channel(self.input_image, image_shape[2], bitwidth)
+            return concatenate_channel(
+                self.replace_minus(self.input_image), image_shape[2], bitwidth
+            )
 
         @property
         def output_data(self) -> int:
@@ -73,30 +102,67 @@ async def run_test(dut):
             result_list = list(result.numpy().astype("uint8").flat)
             return concatenate_channel(result_list, output_channel, bitwidth)
 
+        def get_weights(self):
+            return concatenate_integers(
+                self.replace_minus(self.weights), bitwidth=bitwidth
+            )
+
+        def get_threshold(self):
+            threshold = []
+            batchnorm_params = [
+                a.tolist() for a in model.get_layer("test_batchnorm").get_weights()
+            ]
+            for gamma, beta, mean, variance in zip(*batchnorm_params):
+                # TODO: Could be wrong order.
+
+                epsilon = 0.001  # prevent division by 0
+
+                # use batch normalization as activation
+                # see also: https://arxiv.org/pdf/1612.07119.pdf, 4.2.2 Batchnorm-activation as Threshold
+                threshold_batchnorm = mean - (beta / (variance * epsilon - gamma))
+                print(threshold_batchnorm)
+
+                # Conversion from LARQ format [-1, 1] to pocket-bnn format [0, 1] (positive only):
+                # make the threshold compatible to positive only values
+                fan_in = kernel_size[0] ** 2 * image_shape[2]  # max value
+                # get the following formula by solving:
+                # x - y = fan_in; x + y = threshold
+                threshold_pos = (threshold_batchnorm + fan_in) / 2
+                threshold.append(int(threshold_pos))
+
+            return concatenate_integers(
+                self.replace_minus(threshold), bitwidth=post_convolution_bitwidth
+            )
+
     cases = (
-        ## zero weights
-        # Testcase(
-        # [randint(0, 1) for _ in range(math.prod(image_shape))],
-        # [0] * (image_shape[2] * output_channel * kernel_size[0] ** 2),
-        # [randint(0, 2 ** post_convolution_bitwidth - 1) for _ in range(output_channel)],
-        # ),
-        ## zero activations
-        # Testcase(
-        # [0] * math.prod(image_shape),
-        # [randint(0, 1) for _ in range(image_shape[2] * output_channel * kernel_size[0] ** 2)],
-        # [randint(0, 2 ** post_convolution_bitwidth - 1) for _ in range(output_channel)],
-        # ),
-        ## # all ones
-        ## Testcase([2 ** bitwidth - 1] * math.prod(image_shape)),
+        # zero activations, zero weights -> result should be all zeros
+        Testcase(
+            [-1] * math.prod(image_shape),
+            [-1] * (image_shape[2] * output_channel * kernel_size[0] ** 2),
+        ),
+        # one activations, one weights -> result should be all zeros
+        Testcase(
+            [1] * math.prod(image_shape),
+            [1] * (image_shape[2] * output_channel * kernel_size[0] ** 2),
+        ),
+        # one activations, zero weights -> result should be all ones
+        Testcase(
+            [1] * math.prod(image_shape),
+            [-1] * (image_shape[2] * output_channel * kernel_size[0] ** 2),
+        ),
+        # zero activations, one weights -> result should be all ones
+        Testcase(
+            [-1] * math.prod(image_shape),
+            [1] * (image_shape[2] * output_channel * kernel_size[0] ** 2),
+        ),
         # mixed
         Testcase(
             # choice([-1, 1])
-            [randint(0, 1) for _ in range(math.prod(image_shape))],
+            [choice([-1, 1]) for _ in range(math.prod(image_shape))],
             [
-                randint(0, 1)
+                choice([-1, 1])
                 for _ in range(image_shape[2] * output_channel * kernel_size[0] ** 2)
             ],
-            [16] * output_channel,  # corresponds to batchnorm parameter (see formula)
         ),
     )
 
@@ -120,30 +186,8 @@ async def run_test(dut):
         print("reshaped weights", reshaped_weights)
         print("fff", model.get_layer("test_conv").get_weights()[0][:, :, :, 0])
 
-        # TODO: Try to set realistic batchnorm parameter. For now just set the mean to an arbitrary value.
-        # beta=offset, gamma=scale, mean, variance
-        original_batch_weights = model.get_layer("test_batchnorm").get_weights()
-        # np.array([kernel_size[0] ** 2 * image_shape[2] / 2]
-        model.get_layer("test_batchnorm").set_weights(
-            [
-                original_batch_weights[0],
-                original_batch_weights[1],
-                np.array([16] * output_channel),
-                original_batch_weights[3],
-            ]
-        )
-
-        print(case.weights)
-
-        def replace_minus(values):
-            return [0 if v == -1 else v for v in values]
-
-        print(replace_minus(case.weights))
-        print(len(bin(concatenate_integers(case.weights, bitwidth=1))[2:]))
-        dut.islv_weights <= concatenate_integers(case.weights, bitwidth=1)
-        dut.islv_threshold <= concatenate_integers(
-            case.threshold, bitwidth=post_convolution_bitwidth
-        )
+        dut.islv_weights <= case.get_weights()
+        dut.islv_threshold <= case.get_threshold()
 
         dut.isl_start <= 1
         await Timer(clock_period, units="ns")
@@ -161,7 +205,7 @@ async def run_test(dut):
         await Timer(40 * clock_period, units="ns")
 
         print("expected result:", case.output_data)
-        print(output_mon.output)
+        print("actual result:", output_mon.output)
         assert output_mon.output == case.output_data
         # assert False
         output_mon.clear()

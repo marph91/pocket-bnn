@@ -46,7 +46,7 @@ begin
 
       if (isl_valid = '1') then
         -- or map directly to hardware (islv_weights as constant)
-        slv_multiplication_result <= islv_data and islv_weights;
+        slv_multiplication_result <= islv_data xnor islv_weights;
 
         sl_add <= '1';
       end if;
@@ -56,7 +56,6 @@ begin
         for i in slv_multiplication_result'range loop
           if (slv_multiplication_result(i) = '1') then
             usig_ones_count := usig_ones_count + 1;
-            -- assert usig_ones_count <= 2 ** C_POST_CONVOLUTION_BITWIDTH;
           end if;
         end loop;
 
