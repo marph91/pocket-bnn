@@ -1,0 +1,7 @@
+sim_build
+.mypy_cache
+.pytest_cache
+__pycache__
+
+notes.txt
+*.gtkw

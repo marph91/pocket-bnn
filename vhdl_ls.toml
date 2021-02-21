@@ -1,0 +1,10 @@
+[libraries]
+util.files = [
+  "src/util/*.vhd",
+]
+window_ctrl_lib.files = [
+  "src/window_ctrl/*.vhd",
+]
+cnn_lib.files = [
+  "src/*.vhd",
+]
