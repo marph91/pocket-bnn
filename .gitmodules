@@ -1,0 +1,3 @@
+[submodule "submodules/JSON-for-VHDL"]
+	path = submodules/JSON-for-VHDL
+	url = https://github.com/Paebbels/JSON-for-VHDL.git
