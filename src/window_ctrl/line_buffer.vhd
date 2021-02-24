@@ -14,13 +14,13 @@ entity line_buffer is
     C_CH        : integer range 1 to 1024 := 16;
     C_IMG_WIDTH : integer range 1 to 2048 := 20;
 
-    C_KERNEL_SIZE : integer range 1 to 2048 := 3
+    C_KERNEL_SIZE : integer range 1 to 7 := 3
   );
   port (
     isl_clk   : in    std_logic;
     isl_valid : in    std_logic;
     islv_data : in    std_logic_vector(C_BITWIDTH - 1 downto 0);
-    oa_data   : out   t_slv_array_1d(0 to C_KERNEL_SIZE - 1);
+    oa_data   : out   t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0);
     osl_valid : out   std_logic
   );
 end entity line_buffer;
@@ -31,7 +31,7 @@ architecture behavioral of line_buffer is
   constant C_BRAM_DATA_WIDTH : integer := (C_KERNEL_SIZE - 1) * C_BITWIDTH;
 
   signal sl_valid_out : std_logic := '0';
-  signal a_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1) := (others => (others => '0'));
+  signal a_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => '0'));
 
   signal   usig_addr_cnt     : unsigned(log2(C_BRAM_SIZE - 1) - 1 downto 0) := (others => '0');
   constant C_BRAM_ADDR_WIDTH : integer := usig_addr_cnt'LENGTH;

@@ -70,7 +70,14 @@ async def run_test(dut):
     # prepare coroutines
     clock_period = 10  # ns
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
-    output_mon = ImageMonitor("output", dut.oslv_data, dut.osl_valid, dut.isl_clk, 1)
+    output_mon = ImageMonitor(
+        "output",
+        dut.oslv_data,
+        dut.osl_valid,
+        dut.isl_clk,
+        1,
+        bitwidth * image_shape[2],
+    )
     dut.isl_valid <= 0
     dut.isl_start <= 0
     await Timer(clock_period, units="ns")
@@ -98,14 +105,23 @@ async def run_test(dut):
         output_mon.clear()
 
 
-@pytest.mark.parametrize("kernel_size", range(2, 3))  # range(2, 6)
-def test_window_maximum_pooling(record_waveform, kernel_size):
+# Don't run the full test matrix. Only the most common configs.
+@pytest.mark.parametrize(
+    "kernel_size,stride,channel",
+    [
+        (2, 1, 8),
+        (2, 2, 12),
+        (3, 1, 16),
+        (3, 2, 9),
+    ],
+)
+def test_window_maximum_pooling(record_waveform, kernel_size, stride, channel):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
-        "C_STRIDE": 2,
-        "C_CHANNEL": 8,
-        "C_IMG_WIDTH": 4,
-        "C_IMG_HEIGHT": 4,
+        "C_STRIDE": stride,
+        "C_CHANNEL": channel,
+        "C_IMG_WIDTH": 8,
+        "C_IMG_HEIGHT": 8,
     }
     run(
         vhdl_sources=get_files(

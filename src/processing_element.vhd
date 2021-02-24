@@ -14,7 +14,9 @@ library util;
 entity processing_element is
   generic (
     -- TODO: input bitwidth, for now = 1
+    C_LAYER_NAME : string := "pe1";
 
+    C_WEIGHTS_FILE            : string  := "../sim/weights.json";
     C_CONVOLUTION_KERNEL_SIZE : integer := 3;
     C_CONVOLUTION_STRIDE      : integer := 1;
 
@@ -23,12 +25,8 @@ entity processing_element is
 
     C_INPUT_CHANNEL  : integer := 8;
     C_OUTPUT_CHANNEL : integer := 8;
-
-    C_IMG_WIDTH  : integer := 4;
-    C_IMG_HEIGHT : integer := 4;
-
-    C_WEIGHTS_FILE : string := "../sim/weights.json";
-    C_LAYER_NAME   : string := "pe1"
+    C_IMG_WIDTH      : integer := 4;
+    C_IMG_HEIGHT     : integer := 4
   );
   port (
     isl_clk   : in    std_logic;

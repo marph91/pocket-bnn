@@ -32,8 +32,8 @@ architecture behavioral of output_buffer is
   signal int_input_cnt  : integer range 0 to C_CH - 1 := 0;
   signal int_output_cnt : integer range 0 to C_CH - 1 := 0;
 
-  signal a_buffer_in  : t_slv_array_1d(0 to C_CH - 1) := (others => (others => '0'));
-  signal a_buffer_out : t_slv_array_1d(0 to C_CH - 1) := (others => (others => '0'));
+  signal a_buffer_in  : t_slv_array_1d(0 to C_CH - 1)(C_TOTAL_BITS - 1 downto 0) := (others => (others => '0'));
+  signal a_buffer_out : t_slv_array_1d(0 to C_CH - 1)(C_TOTAL_BITS - 1 downto 0) := (others => (others => '0'));
 
   signal sl_buffer_rdy : std_logic := '0';
 

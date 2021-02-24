@@ -168,7 +168,14 @@ async def run_test(dut):
     # prepare coroutines
     clock_period = 10  # ns
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
-    output_mon = ImageMonitor("output", dut.oslv_data, dut.osl_valid, dut.isl_clk, 1)
+    output_mon = ImageMonitor(
+        "output",
+        dut.oslv_data,
+        dut.osl_valid,
+        dut.isl_clk,
+        1,
+        bitwidth * output_channel,
+    )
     dut.isl_valid <= 0
     dut.isl_start <= 0
     await Timer(clock_period, units="ns")
@@ -210,15 +217,33 @@ async def run_test(dut):
         output_mon.clear()
 
 
-@pytest.mark.parametrize("kernel_size", range(3, 4))  # range(2, 6)
-def test_window_convolution_activation(record_waveform, kernel_size):
+# Don't run the full test matrix. Only the most common configs.
+@pytest.mark.parametrize(
+    "kernel_size,stride,input_channel,output_channel",
+    [
+        (1, 1, 4, 8),
+        (2, 1, 4, 8),
+        (2, 2, 4, 8),
+        (3, 1, 4, 8),
+        (3, 1, 1, 4),
+        (3, 1, 3, 8),
+        (3, 1, 4, 8),
+        (3, 1, 8, 16),
+        (3, 2, 4, 8),
+        (5, 1, 4, 8),
+        (7, 1, 4, 8),
+    ],
+)
+def test_window_convolution_activation(
+    record_waveform, kernel_size, stride, input_channel, output_channel
+):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
-        "C_STRIDE": 1,
-        "C_INPUT_CHANNEL": 8,
-        "C_OUTPUT_CHANNEL": 8,
-        "C_IMG_WIDTH": 4,
-        "C_IMG_HEIGHT": 4,
+        "C_STRIDE": stride,
+        "C_INPUT_CHANNEL": input_channel,
+        "C_OUTPUT_CHANNEL": output_channel,
+        "C_IMG_WIDTH": 8,
+        "C_IMG_HEIGHT": 8,
     }
     run(
         vhdl_sources=get_files(

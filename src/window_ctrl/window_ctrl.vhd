@@ -22,7 +22,7 @@ entity window_ctrl is
     C_IMG_HEIGHT : integer range 1 to 512 := 8; -- image height
 
     -- kernel properties
-    C_KERNEL_SIZE : integer range 1 to 5 := 3; -- kernel size (squared)
+    C_KERNEL_SIZE : integer range 1 to 7 := 3; -- kernel size (squared)
     C_STRIDE      : integer range 1 to 3 := 1; -- kernel stride
 
     -- further configuration
@@ -48,11 +48,11 @@ architecture behavioral of window_ctrl is
 
   -- for line buffer
   signal sl_lb_valid_out : std_logic := '0';
-  signal a_lb_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1);
+  signal a_lb_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0);
 
   -- for window buffer
   signal sl_wb_valid_out : std_logic := '0';
-  signal a_wb_data_out   : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1) := (others => (others => (others => '0')));
+  signal a_wb_data_out   : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => (others => '0')));
 
   -- for selector
   signal sl_flush                 : std_logic := '0';
@@ -60,12 +60,12 @@ architecture behavioral of window_ctrl is
   signal sl_selector_valid_out    : std_logic := '0';
   signal sl_selector_valid_out_d1 : std_logic := '0';
   signal sl_selector_valid_out_d2 : std_logic := '0';
-  signal a_selector_data_in       : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1) := (others => (others => (others => '0')));
-  signal a_selector_data_out      : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1) := (others => (others => (others => '0')));
+  signal a_selector_data_in       : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => (others => '0')));
+  signal a_selector_data_out      : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => (others => '0')));
 
   -- for channel repeater
   signal sl_repeater_valid_out : std_logic := '0';
-  signal a_repeater_data_out   : t_kernel_array(0 to C_PARALLEL_CH - 1)(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1) := (others => (others => (others => (others => '0'))));
+  signal a_repeater_data_out   : t_kernel_array(0 to C_PARALLEL_CH - 1)(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => (others => (others => '0'))));
   signal sl_repeater_rdy       : std_logic := '0';
 
   signal slv_data_out : std_logic_vector(C_PARALLEL_CH * C_KERNEL_SIZE * C_KERNEL_SIZE * C_BITWIDTH - 1 downto 0) := (others => '0');

@@ -12,13 +12,13 @@ entity window_buffer is
 
     C_CH : integer range 1 to 512 := 4;
 
-    C_KERNEL_SIZE : integer range 1 to 5 := 3
+    C_KERNEL_SIZE : integer range 1 to 7 := 3
   );
   port (
     isl_clk   : in    std_logic;
     isl_valid : in    std_logic;
-    ia_data   : in    t_slv_array_1d(0 to C_KERNEL_SIZE - 1);
-    oa_data   : out   t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1);
+    ia_data   : in    t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0);
+    oa_data   : out   t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0);
     osl_valid : out   std_logic
   );
 end entity window_buffer;
@@ -29,7 +29,7 @@ architecture behavior of window_buffer is
 
   signal sl_valid_out : std_logic := '0';
 
-  type t_win_buffer is array (0 to C_CH - 1) of t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1);
+  type t_win_buffer is array (0 to C_CH - 1) of t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0);
 
   signal a_win_buffer : t_win_buffer := (others => (others => (others => (others => '0'))));
 

@@ -9,13 +9,13 @@ from cocotb.triggers import RisingEdge, Timer
 class ImageMonitor(Monitor):
     """Observes single input or output of DUT."""
 
-    def __init__(self, name, signal, valid, clock, output_channels):
+    def __init__(self, name, signal, valid, clock, output_channels, bitwidth=1):
         self.name = name
         self.signal = signal
         self.valid = valid
         self.clock = clock
         self.output = []
-        self.eol_count = 0
+        self.bitwidth = bitwidth
         self.output_channels = output_channels
 
         super().__init__()
@@ -36,7 +36,7 @@ class ImageMonitor(Monitor):
             if valid == 1:
                 vec = self.signal.value.binstr
                 output = [
-                    int(vec[ch * 8 : (ch + 1) * 8], 2)
+                    int(vec[ch * self.bitwidth : (ch + 1) * self.bitwidth], 2)
                     for ch in range(self.output_channels)
                 ]
                 self.output.extend(output)

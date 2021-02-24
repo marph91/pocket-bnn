@@ -14,7 +14,7 @@ entity window_convolution_activation is
   generic (
     -- TODO: input bitwidth, for now = 1
 
-    C_KERNEL_SIZE : integer range 2 to 3 := 2;
+    C_KERNEL_SIZE : integer range 1 to 7 := 2;
     C_STRIDE      : integer              := 1;
 
     C_INPUT_CHANNEL  : integer;

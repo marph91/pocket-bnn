@@ -62,10 +62,9 @@ async def run_test(dut):
         ), f"{dut.oslv_data.value.integer} /= {case.output_data[0]}"
 
 
-@pytest.mark.parametrize("kernel_size", range(2, 3))  # range(2, 6)
-def test_maximum_pooling(record_waveform, kernel_size):
+def test_maximum_pooling(record_waveform):
     generics = {
-        "C_KERNEL_SIZE": kernel_size,
+        "C_KERNEL_SIZE": 2,
         "C_CHANNEL": 1,
     }
     run(

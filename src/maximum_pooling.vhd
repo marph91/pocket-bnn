@@ -4,7 +4,7 @@ library ieee;
 
 entity maximum_pooling is
   generic (
-    C_KERNEL_SIZE : integer range 2 to 5 := 2;
+    C_KERNEL_SIZE : integer range 2 to 3 := 2;
     C_CHANNEL     : integer              := 1
   );
   port (
