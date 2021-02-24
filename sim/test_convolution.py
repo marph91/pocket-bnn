@@ -9,6 +9,7 @@ from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 
+from test_utils.cocotb_helpers import Tick
 from test_utils.general import get_files, record_waveform
 
 
@@ -59,19 +60,20 @@ async def run_test(dut):
 
     # initialize the test
     clock_period = 10  # ns
+    tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
     dut.isl_valid <= 0
-    await Timer(clock_period, units="ns")
+    await tick.wait()
 
     for case in cases:
         # TODO: test pipelining -> monitor output
         dut.isl_valid <= 1
         dut.islv_data <= case.input_activations_int
         dut.islv_weights <= case.input_weights_int
-        await Timer(clock_period, units="ns")
+        await tick.wait()
         while dut.osl_valid.value.integer == 0:
             dut.isl_valid <= 0
-            await Timer(clock_period, units="ns")
+            await tick.wait()
         assert (
             dut.oslv_data.value.integer == case.output_data
         ), f"{dut.oslv_data.value.integer} /= {case.output_data}"

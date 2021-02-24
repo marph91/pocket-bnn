@@ -40,3 +40,18 @@ class ImageMonitor(Monitor):
                     for ch in range(self.output_channels)
                 ]
                 self.output.extend(output)
+
+
+class Tick:
+    """Convenience class to avoid specifying the unit always."""
+
+    def __init__(self, clock_period=10, units="ns"):
+        self.clock_period = clock_period
+        self.units = units
+        self.tick = Timer(clock_period, units=units)
+
+    async def wait(self):
+        await self.tick
+
+    async def wait_multiple(self, tick_count=1):
+        await Timer(self.clock_period * tick_count, units=self.units)

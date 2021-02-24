@@ -9,6 +9,7 @@ from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 
+from test_utils.cocotb_helpers import Tick
 from test_utils.general import get_files, record_waveform
 
 
@@ -23,12 +24,6 @@ def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
 
 @cocotb.test()
 async def run_test(dut):
-    clock_period = 10  # ns
-
-    # prepare coroutines
-    cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
-    await Timer(clock_period, units="ns")
-
     @dataclass
     class Testcase:
         input_window: List[List[int]]
@@ -52,10 +47,16 @@ async def run_test(dut):
         Testcase([[randint(0, 1) for _ in range(window_size)] for _ in range(channel)]),
     )
 
+    # prepare coroutines
+    clock_period = 10  # ns
+    tick = Tick(clock_period=clock_period)
+    cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
+    await tick.wait()
+
     for case in cases:
         dut.isl_valid <= 1
         dut.islv_data <= case.input_data[0]
-        await Timer(clock_period, units="ns")
+        await tick.wait()
         assert dut.osl_valid.value.integer == 1
         assert (
             dut.oslv_data.value.integer == case.output_data[0]

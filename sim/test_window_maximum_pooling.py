@@ -12,7 +12,7 @@ from cocotb_test.simulator import run
 import pytest
 import tensorflow as tf
 
-from test_utils.cocotb_helpers import ImageMonitor
+from test_utils.cocotb_helpers import ImageMonitor, Tick
 from test_utils.general import concatenate_channel, get_files, record_waveform
 
 random.seed(100)  # TODO: fixture
@@ -69,6 +69,7 @@ async def run_test(dut):
 
     # prepare coroutines
     clock_period = 10  # ns
+    tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
     output_mon = ImageMonitor(
         "output",
@@ -80,27 +81,27 @@ async def run_test(dut):
     )
     dut.isl_valid <= 0
     dut.isl_start <= 0
-    await Timer(clock_period, units="ns")
+    await tick.wait()
 
     # run the specific testcases
     for case in cases:
         dut.isl_start <= 1
-        await Timer(clock_period, units="ns")
+        await tick.wait()
         dut.isl_start <= 0
-        await Timer(clock_period, units="ns")
+        await tick.wait()
 
         for datum in case.input_data:
             dut.isl_valid <= 1
             dut.islv_data <= datum
-            await Timer(clock_period, units="ns")
+            await tick.wait()
             dut.isl_valid <= 0
-            await Timer(clock_period, units="ns")
+            await tick.wait()
 
         dut.isl_valid <= 0
-        await Timer(40 * clock_period, units="ns")
+        await tick.wait_multiple(40)
 
-        print(case.output_data)
-        print(output_mon.output)
+        print("Expected output:", case.output_data)
+        print("Actual output:", output_mon.output)
         assert output_mon.output == case.output_data
         output_mon.clear()
 

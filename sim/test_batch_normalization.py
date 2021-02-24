@@ -8,6 +8,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 
+from test_utils.cocotb_helpers import Tick
 from test_utils.general import get_files, record_waveform
 
 
@@ -32,15 +33,16 @@ async def run_test(dut):
 
     # initialize the test
     clock_period = 10  # ns
+    tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
     dut.isl_valid <= 0
-    await Timer(clock_period, units="ns")
+    await tick.wait()
 
     for case in cases:
         dut.isl_valid <= 1
         dut.islv_data <= case.input_data
         dut.islv_threshold <= case.input_threshold
-        await Timer(clock_period, units="ns")
+        await tick.wait()
         assert (
             dut.oslv_data.value.integer == case.output_data
         ), f"{dut.oslv_data.value.integer} /= {case.output_data}"

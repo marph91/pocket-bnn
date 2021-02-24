@@ -15,7 +15,7 @@ import larq as lq
 import numpy as np
 import tensorflow as tf
 
-from test_utils.cocotb_helpers import ImageMonitor
+from test_utils.cocotb_helpers import ImageMonitor, Tick
 from test_utils.general import (
     concatenate_channel,
     concatenate_integers,
@@ -95,9 +95,7 @@ async def run_test(dut):
             # inference
             image_tensor = tf.convert_to_tensor(self.input_image)
             reshaped_tensor = tf.reshape(image_tensor, batch_shape)
-            print("input reshaped", reshaped_tensor)
             result = model(reshaped_tensor)
-            print("result", result)
             result_list = list(result.numpy().astype("uint8").flat)
             return concatenate_channel(result_list, output_channel, bitwidth)
 
@@ -167,6 +165,7 @@ async def run_test(dut):
 
     # prepare coroutines
     clock_period = 10  # ns
+    tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
     output_mon = ImageMonitor(
         "output",
@@ -178,42 +177,41 @@ async def run_test(dut):
     )
     dut.isl_valid <= 0
     dut.isl_start <= 0
-    await Timer(clock_period, units="ns")
+    await tick.wait()
 
     # run the specific testcases
     for case in cases:
-        print("eee", model.get_layer("test_conv").get_weights()[0].shape)
+        # print("eee", model.get_layer("test_conv").get_weights()[0].shape)
         reshaped_weights = [
             np.array(case.weights).reshape(
                 kernel_size + (image_shape[2], output_channel)
             )
         ]
         model.get_layer("test_conv").set_weights(reshaped_weights)
-        print("reshaped weights", reshaped_weights)
-        print("fff", model.get_layer("test_conv").get_weights()[0][:, :, :, 0])
+        # print("reshaped weights", reshaped_weights)
+        # print("fff", model.get_layer("test_conv").get_weights()[0][:, :, :, 0])
 
         dut.islv_weights <= case.get_weights()
         dut.islv_threshold <= case.get_threshold()
 
         dut.isl_start <= 1
-        await Timer(clock_period, units="ns")
+        await tick.wait()
         dut.isl_start <= 0
-        await Timer(clock_period, units="ns")
+        await tick.wait()
 
         for datum in case.input_data:
             dut.isl_valid <= 1
             dut.islv_data <= datum
-            await Timer(clock_period, units="ns")
+            await tick.wait()
             dut.isl_valid <= 0
-            await Timer(clock_period, units="ns")
+            await tick.wait()
 
         dut.isl_valid <= 0
-        await Timer(40 * clock_period, units="ns")
+        await tick.wait_multiple(40)
 
         print("expected result:", case.output_data)
         print("actual result:", output_mon.output)
         assert output_mon.output == case.output_data
-        # assert False
         output_mon.clear()
 
 
