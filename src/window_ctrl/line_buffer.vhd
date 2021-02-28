@@ -73,7 +73,10 @@ begin
 
     if (rising_edge(isl_clk)) then
       if (isl_valid = '1') then
-        if (usig_addr_cnt /= C_BRAM_SIZE - 2) then
+        -- type cast to avoid ghdl synthesis error:
+        -- error: synth_static_dyadic_predefined: unhandled IIR_PREDEFINED_IEEE_NUMERIC_STD_NE_UNS_NAT
+        -- TODO: report bug
+        if (to_integer(usig_addr_cnt) /= C_BRAM_SIZE - 2) then
           usig_addr_cnt <= usig_addr_cnt + 1;
         else
           usig_addr_cnt <= (others => '0');
