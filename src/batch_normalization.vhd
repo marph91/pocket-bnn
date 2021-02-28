@@ -4,7 +4,7 @@ library ieee;
   use ieee.numeric_std.all;
 
 -- basically the simple threshold replaces batch normalization + ReLU
--- The threshold is caculated at synthesis time by using the batch norm parameters.
+-- The threshold is calculated at synthesis time by using the batch norm parameters.
 
 entity batch_normalization is
   generic (
