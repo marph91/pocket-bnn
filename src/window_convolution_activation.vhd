@@ -14,14 +14,14 @@ entity window_convolution_activation is
   generic (
     -- TODO: input bitwidth, for now = 1
 
-    C_KERNEL_SIZE : integer range 1 to 7 := 2;
+    C_KERNEL_SIZE : integer range 1 to 7 := 3;
     C_STRIDE      : integer              := 1;
 
-    C_INPUT_CHANNEL  : integer;
-    C_OUTPUT_CHANNEL : integer;
+    C_INPUT_CHANNEL  : integer := 4;
+    C_OUTPUT_CHANNEL : integer := 8;
 
-    C_IMG_WIDTH  : integer;
-    C_IMG_HEIGHT : integer
+    C_IMG_WIDTH  : integer := 4;
+    C_IMG_HEIGHT : integer := 4
   );
   port (
     isl_clk   : in    std_logic;
