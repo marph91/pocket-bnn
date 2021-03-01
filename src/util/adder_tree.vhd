@@ -1,0 +1,78 @@
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.math_real.all;
+
+entity adder_tree is
+  generic (
+    C_INPUT_COUNT     : integer;
+    C_INPUT_BITWIDTH  : integer;
+    C_OUTPUT_BITWIDTH : integer
+  );
+  port (
+    isl_clk   : in    std_logic;
+    isl_valid : in    std_logic;
+    islv_data : in    std_logic_vector(C_INPUT_COUNT * C_INPUT_BITWIDTH - 1 downto 0);
+    oslv_data : out   std_logic_vector(C_OUTPUT_BITWIDTH - 1 downto 0);
+    osl_valid : out   std_logic
+  );
+end entity adder_tree;
+
+architecture mixed of adder_tree is
+
+  constant C_STAGES             : integer := integer(ceil(log2(real(C_INPUT_COUNT))));
+  constant C_INPUTS_FIRST_STAGE : integer := 2 ** C_STAGES;
+
+  -- Stage of the adder tree.
+  signal slv_sum_stage : std_logic_vector(C_STAGES downto 0) := (others => '0');
+
+  -- Pipelined sum.
+  -- For example C_INPUTS_FIRST_STAGE = 8:
+  -- stage 1: a_sums(0 to 7)
+  -- stage 2: a_sums(8 to 11)
+  -- stage 3: a_sums(12 to 13)
+  -- stage 4: a_sums(14) -> final sum
+
+  type t_sums is array (natural range <>) of unsigned(C_OUTPUT_BITWIDTH - 1 downto 0);
+
+  signal a_sums : t_sums(0 to 2 * C_INPUTS_FIRST_STAGE - 1);
+
+  function convert_input (input_vector : std_logic_vector) return t_sums is
+    variable v_sum_init : t_sums(0 to C_INPUTS_FIRST_STAGE - 1) := (others => (others => '0'));
+  begin
+    for i in 0 to C_INPUT_COUNT - 1 loop
+      v_sum_init(i)(C_INPUT_BITWIDTH - 1 downto 0) := unsigned(input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH));
+    end loop;
+    return v_sum_init;
+  end function convert_input;
+
+begin
+
+  process (isl_clk) is
+
+    variable v_current_index : integer range 0 to a_sums'length;
+
+  begin
+
+    if (rising_edge(isl_clk)) then
+      slv_sum_stage                         <= slv_sum_stage(slv_sum_stage'high - 1 downto 0) & isl_valid;
+      a_sums(0 to C_INPUTS_FIRST_STAGE - 1) <= convert_input(islv_data);
+
+      v_current_index := 0;
+      for i in slv_sum_stage'reverse_range loop
+        if (slv_sum_stage(i) = '1') then
+          for j in 0 to 2 ** (C_STAGES - i) / 2 - 1 loop
+            a_sums(v_current_index + 2 ** (C_STAGES - i) + j) <= a_sums(v_current_index + 2 * j) +
+                                                                 a_sums(v_current_index + 2 * j + 1);
+          end loop;
+        end if;
+        v_current_index := v_current_index + 2 ** (C_STAGES - i);
+      end loop;
+    end if;
+
+  end process;
+
+  osl_valid <= slv_sum_stage(slv_sum_stage'high);
+  oslv_data <= std_logic_vector(a_sums(a_sums'high - 1));
+
+end architecture mixed;

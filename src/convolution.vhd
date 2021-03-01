@@ -15,10 +15,9 @@ entity convolution is
     C_INPUT_CHANNEL : integer              := 1
   );
   port (
-    isl_clk   : in    std_logic;
-    isl_valid : in    std_logic;
-    islv_data : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
-    -- maybe weights + 1 for bias
+    isl_clk      : in    std_logic;
+    isl_valid    : in    std_logic;
+    islv_data    : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
     islv_weights : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
     oslv_data    : out   std_logic_vector(log2(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL + 1) - 1 downto 0);
     osl_valid    : out   std_logic
@@ -27,85 +26,69 @@ end entity convolution;
 
 architecture behavioral of convolution is
 
-  function find_best_parallelity return integer is
-  begin
-
-    if (C_INPUT_CHANNEL > C_KERNEL_SIZE) then
-      if (C_INPUT_CHANNEL mod 4 = 0) then
-        if (C_INPUT_CHANNEL mod 8 = 0) then
-          if (C_INPUT_CHANNEL mod 16 = 0) then
-            return 16;
-          end if;
-          return 8;
-        end if;
-        return 4;
-      end if;
-    end if;
-
-    return C_KERNEL_SIZE;
-  end function find_best_parallelity;
-
-  constant C_PARALLEL_POPCOUNT : integer := find_best_parallelity;
+  constant C_PARALLEL_POPCOUNT : integer := 4;
   constant C_SPLIT             : integer := integer(ceil(real(islv_data'length) / real(C_PARALLEL_POPCOUNT)));
+  constant C_PADDED_BITWIDTH   : integer := C_PARALLEL_POPCOUNT * C_SPLIT;
 
   type t_ones_count is array(natural range<>) of unsigned(oslv_data'range);
 
   signal a_ones_count : t_ones_count(0 to C_SPLIT);
 
-  signal sl_add                    : std_logic := '0';
-  signal sl_popcount               : std_logic := '0';
-  signal slv_multiplication_result : std_logic_vector(islv_data'range);
+  signal sl_add       : std_logic := '0';
+  signal sl_popcount  : std_logic := '0';
+  signal slv_product  : std_logic_vector(C_PADDED_BITWIDTH - 1 downto 0) := (others => '0');
+  signal slv_popcount : std_logic_vector(C_SPLIT * 3 - 1 downto 0);
 
   signal sl_valid_out : std_logic := '0';
   signal slv_data_out : std_logic_vector(oslv_data'range);
 
 begin
 
+  i_adder_tree : entity util.adder_tree
+    generic map (
+      C_INPUT_COUNT     => C_SPLIT,
+      C_INPUT_BITWIDTH  => 3,
+      C_OUTPUT_BITWIDTH => oslv_data'length
+    )
+    port map (
+      isl_clk   => isl_clk,
+      isl_valid => sl_add,
+      islv_data => slv_popcount,
+      oslv_data => slv_data_out,
+      osl_valid => sl_valid_out
+    );
+
   proc_convolution : process (isl_clk) is
 
-    variable v_usig_popcount       : unsigned(oslv_data'range);
+    variable v_usig_popcount       : unsigned(2 downto 0);
     variable v_usig_popcount_total : unsigned(oslv_data'range);
 
   begin
 
     if (rising_edge(isl_clk)) then
-      assert (C_INPUT_CHANNEL mod C_PARALLEL_POPCOUNT = 0) or
-        (C_KERNEL_SIZE mod C_PARALLEL_POPCOUNT = 0) severity failure;
-
-      sl_popcount  <= '0';
-      sl_add       <= '0';
-      sl_valid_out <= '0';
+      sl_popcount <= '0';
+      sl_add      <= '0';
 
       if (isl_valid = '1') then
         -- or map directly to hardware (islv_weights as constant)
-        slv_multiplication_result <= islv_data xnor islv_weights;
-        a_ones_count              <= (others => (others => '0'));
-        sl_popcount               <= '1';
+        -- pad zeros for the adder tree
+        slv_product <= (islv_data xnor islv_weights) & (slv_product'length - islv_data'length - 1 downto 0 => '0');
+        sl_popcount <= '1';
       end if;
 
-      -- TODO: The split/adder can be improved.
+      -- If using bram, one would be needed for each adder stage.
       if (sl_popcount = '1') then
-        for split in 0 to C_SPLIT - 1 loop
+        for slice in 0 to slv_product'length / C_PARALLEL_POPCOUNT - 1 loop
           v_usig_popcount := (others => '0');
           for i in 0 to C_PARALLEL_POPCOUNT - 1 loop
-            if (slv_multiplication_result(i + split * C_PARALLEL_POPCOUNT) = '1') then
+            if (slv_product(i + slice * C_PARALLEL_POPCOUNT) = '1') then
               v_usig_popcount := v_usig_popcount + 1;
             end if;
           end loop;
-          a_ones_count(split) <= v_usig_popcount;
+          slv_popcount((slice + 1) * 3 - 1 downto slice * 3) <= std_logic_vector(v_usig_popcount);
         end loop;
 
         sl_add <= '1';
-      end if;
-
-      if (sl_add = '1') then
-        v_usig_popcount_total   := (others => '0');
-        for split in 0 to C_SPLIT - 1 loop
-          v_usig_popcount_total := v_usig_popcount_total + a_ones_count(split);
-        end loop;
-
-        sl_valid_out <= '1';
-        slv_data_out <= std_logic_vector(v_usig_popcount_total);
       end if;
     end if;
 
