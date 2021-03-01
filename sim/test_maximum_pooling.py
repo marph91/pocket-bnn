@@ -30,21 +30,26 @@ async def run_test(dut):
 
         @property
         def input_data(self) -> list:
-            return [concatenate_integers(ch) for ch in self.input_window]
+            return concatenate_integers(
+                [concatenate_integers(ch) for ch in self.input_window],
+                bitwidth=len(self.input_window[0]),
+            )
 
         @property
         def output_data(self) -> list:
-            return [int(any(ch)) for ch in self.input_window]
+            return concatenate_integers(
+                [int(any(ch)) for ch in zip(*self.input_window)]
+            )
 
     window_size = dut.C_KERNEL_SIZE.value.integer ** 2
     channel = dut.C_CHANNEL.value.integer
     cases = (
         # all zeros
-        Testcase([[0] * window_size] * channel),
+        Testcase([[0] * channel] * window_size),
         # all ones
-        Testcase([[1] * window_size] * channel),
+        Testcase([[1] * channel] * window_size),
         # mixed
-        Testcase([[randint(0, 1) for _ in range(window_size)] for _ in range(channel)]),
+        Testcase([[randint(0, 1) for _ in range(channel)] for _ in range(window_size)]),
     )
 
     # prepare coroutines
@@ -54,19 +59,23 @@ async def run_test(dut):
     await tick.wait()
 
     for case in cases:
+        print(case.input_window)
+        print(case.output_data)
         dut.isl_valid <= 1
-        dut.islv_data <= case.input_data[0]
+        dut.islv_data <= case.input_data
         await tick.wait()
         assert dut.osl_valid.value.integer == 1
         assert (
-            dut.oslv_data.value.integer == case.output_data[0]
-        ), f"{dut.oslv_data.value.integer} /= {case.output_data[0]}"
+            dut.oslv_data.value.integer == case.output_data
+        ), f"{bin(dut.oslv_data.value.integer)[2:]} /= {bin(case.output_data)[2:]}"
 
 
-def test_maximum_pooling(record_waveform):
+@pytest.mark.parametrize("kernel_size", (2, 3))
+@pytest.mark.parametrize("channel", (1, 6))
+def test_maximum_pooling(record_waveform, kernel_size, channel):
     generics = {
-        "C_KERNEL_SIZE": 2,
-        "C_CHANNEL": 1,
+        "C_KERNEL_SIZE": kernel_size,
+        "C_CHANNEL": channel,
     }
     run(
         vhdl_sources=get_files(

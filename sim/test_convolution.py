@@ -79,8 +79,8 @@ async def run_test(dut):
         ), f"{dut.oslv_data.value.integer} /= {case.output_data}"
 
 
-@pytest.mark.parametrize("kernel_size", range(2, 3))  # range(2, 7)
-@pytest.mark.parametrize("input_channel", (4,))  # (1, 4, 9)
+@pytest.mark.parametrize("kernel_size", range(2, 7))
+@pytest.mark.parametrize("input_channel", (1, 4, 9))
 def test_convolution(record_waveform, kernel_size, input_channel):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
