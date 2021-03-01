@@ -18,7 +18,7 @@ entity adder_tree is
   );
 end entity adder_tree;
 
-architecture mixed of adder_tree is
+architecture rtl of adder_tree is
 
   constant C_STAGES             : integer := integer(ceil(log2(real(C_INPUT_COUNT))));
   constant C_INPUTS_FIRST_STAGE : integer := 2 ** C_STAGES;
@@ -38,8 +38,10 @@ architecture mixed of adder_tree is
   signal a_sums : t_sums(0 to 2 * C_INPUTS_FIRST_STAGE - 1);
 
   function convert_input (input_vector : std_logic_vector) return t_sums is
-    variable v_sum_init : t_sums(0 to C_INPUTS_FIRST_STAGE - 1) := (others => (others => '0'));
+    variable v_sum_init : t_sums(0 to C_INPUTS_FIRST_STAGE - 1);
   begin
+    v_sum_init := (others => (others => '0'));
+
     for i in 0 to C_INPUT_COUNT - 1 loop
       v_sum_init(i)(C_INPUT_BITWIDTH - 1 downto 0) := unsigned(input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH));
     end loop;
@@ -48,7 +50,7 @@ architecture mixed of adder_tree is
 
 begin
 
-  process (isl_clk) is
+  proc_adder_tree : process (isl_clk) is
 
     variable v_current_index : integer range 0 to a_sums'length;
 
@@ -70,9 +72,9 @@ begin
       end loop;
     end if;
 
-  end process;
+  end process proc_adder_tree;
 
   osl_valid <= slv_sum_stage(slv_sum_stage'high);
   oslv_data <= std_logic_vector(a_sums(a_sums'high - 1));
 
-end architecture mixed;
+end architecture rtl;
