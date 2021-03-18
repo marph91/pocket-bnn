@@ -13,7 +13,7 @@ library window_ctrl_lib;
 entity window_ctrl is
   generic (
     -- global data bitwidth
-    C_BITWIDTH : integer range 1 to 16 := 8;
+    C_BITWIDTH : integer := 8;
 
     -- image properties
     C_CH_IN      : integer range 1 to 512 := 1; -- input channel

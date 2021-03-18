@@ -154,7 +154,6 @@ async def run_test(dut):
         ),
         # mixed
         Testcase(
-            # choice([-1, 1])
             [choice([-1, 1]) for _ in range(math.prod(image_shape))],
             [
                 choice([-1, 1])
@@ -234,6 +233,7 @@ async def run_test(dut):
 def test_window_convolution_activation(
     record_waveform, kernel_size, stride, input_channel, output_channel
 ):
+    # TODO: Add test for output bitwidth /= 1.
     generics = {
         "C_KERNEL_SIZE": kernel_size,
         "C_STRIDE": stride,
