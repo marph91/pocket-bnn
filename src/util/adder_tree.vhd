@@ -7,6 +7,7 @@ entity adder_tree is
   generic (
     C_INPUT_COUNT     : integer;
     C_INPUT_BITWIDTH  : integer;
+    C_UNSIGNED        : integer range 0 to 1 := 1;
     C_OUTPUT_BITWIDTH : integer
   );
   port (
@@ -33,17 +34,32 @@ architecture rtl of adder_tree is
   -- stage 3: a_sums(12 to 13)
   -- stage 4: a_sums(14) -> final sum
 
-  type t_sums is array (natural range <>) of unsigned(C_OUTPUT_BITWIDTH - 1 downto 0);
+  type t_sums is array (natural range <>) of signed(C_OUTPUT_BITWIDTH + C_UNSIGNED - 1 downto 0);
 
   signal a_sums : t_sums(0 to 2 * C_INPUTS_FIRST_STAGE - 1);
 
   function convert_input (input_vector : std_logic_vector) return t_sums is
-    variable v_sum_init : t_sums(0 to C_INPUTS_FIRST_STAGE - 1);
+    variable v_sum_init    : t_sums(0 to C_INPUTS_FIRST_STAGE - 1);
+    variable v_input_datum : std_logic_vector(C_OUTPUT_BITWIDTH - 1 downto 0);
   begin
     v_sum_init := (others => (others => '0'));
 
+    -- Pad with zeros to widen from input bitwidth to output bitwidth.
+    assert C_OUTPUT_BITWIDTH >= C_INPUT_BITWIDTH;
+    v_input_datum := (others => '0');
+
     for i in 0 to C_INPUT_COUNT - 1 loop
-      v_sum_init(i)(C_INPUT_BITWIDTH - 1 downto 0) := unsigned(input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH));
+
+      -- TODO: use get_slice
+      v_input_datum(C_INPUT_BITWIDTH - 1 downto 0) := input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH);
+
+      if (C_UNSIGNED = 1) then
+        -- Pad a zero (sign) bit in case of unsigned input.
+        v_sum_init(i) := signed('0' & v_input_datum);
+      else
+        v_sum_init(i) := signed(v_input_datum);
+      end if;
+
     end loop;
     return v_sum_init;
   end function convert_input;
@@ -75,6 +91,6 @@ begin
   end process proc_adder_tree;
 
   osl_valid <= slv_sum_stage(slv_sum_stage'high);
-  oslv_data <= std_logic_vector(a_sums(a_sums'high - 1));
+  oslv_data <= std_logic_vector(a_sums(a_sums'high - 1)(C_OUTPUT_BITWIDTH - 1 downto 0));
 
 end architecture rtl;
