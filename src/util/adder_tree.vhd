@@ -5,10 +5,10 @@ library ieee;
 
 entity adder_tree is
   generic (
-    C_INPUT_COUNT     : integer;
-    C_INPUT_BITWIDTH  : integer;
+    C_INPUT_COUNT     : integer              := 4;
+    C_INPUT_BITWIDTH  : integer              := 8;
     C_UNSIGNED        : integer range 0 to 1 := 1;
-    C_OUTPUT_BITWIDTH : integer
+    C_OUTPUT_BITWIDTH : integer              := 8
   );
   port (
     isl_clk   : in    std_logic;
@@ -40,24 +40,24 @@ architecture rtl of adder_tree is
 
   function convert_input (input_vector : std_logic_vector) return t_sums is
     variable v_sum_init    : t_sums(0 to C_INPUTS_FIRST_STAGE - 1);
-    variable v_input_datum : std_logic_vector(C_OUTPUT_BITWIDTH - 1 downto 0);
+    variable v_input_datum : std_logic_vector(C_INPUT_BITWIDTH - 1 downto 0);
   begin
     v_sum_init := (others => (others => '0'));
 
     -- Pad with zeros to widen from input bitwidth to output bitwidth.
-    assert C_OUTPUT_BITWIDTH >= C_INPUT_BITWIDTH;
+    assert C_OUTPUT_BITWIDTH >= C_INPUT_BITWIDTH + C_STAGES; -- Input gets extended by 1 bit at each stage.
     v_input_datum := (others => '0');
 
     for i in 0 to C_INPUT_COUNT - 1 loop
 
       -- TODO: use get_slice
-      v_input_datum(C_INPUT_BITWIDTH - 1 downto 0) := input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH);
+      v_input_datum := input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH);
 
       if (C_UNSIGNED = 1) then
         -- Pad a zero (sign) bit in case of unsigned input.
-        v_sum_init(i) := signed('0' & v_input_datum);
+        v_sum_init(i) := resize(signed('0' & v_input_datum), v_sum_init(0));
       else
-        v_sum_init(i) := signed(v_input_datum);
+        v_sum_init(i) := resize(signed(v_input_datum), v_sum_init(0));
       end if;
 
     end loop;
