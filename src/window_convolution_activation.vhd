@@ -12,12 +12,11 @@ library window_ctrl_lib;
 
 entity window_convolution_activation is
   generic (
-    -- TODO: input bitwidth, for now = 1
-
     C_KERNEL_SIZE : integer range 1 to 7 := 3;
     C_STRIDE      : integer              := 1;
 
     C_INPUT_CHANNEL           : integer               := 4;
+    C_INPUT_CHANNEL_BITWIDTH  : integer               := 1;
     C_OUTPUT_CHANNEL          : integer               := 8;
     C_OUTPUT_CHANNEL_BITWIDTH : integer range 1 to 32 := 1;
 
@@ -28,10 +27,10 @@ entity window_convolution_activation is
     isl_clk   : in    std_logic;
     isl_start : in    std_logic;
     isl_valid : in    std_logic;
-    islv_data : in    std_logic_vector(C_INPUT_CHANNEL - 1 downto 0);
+    islv_data : in    std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
     -- islv_weights and islv_threshold are constants
     islv_weights   : in    std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL * C_OUTPUT_CHANNEL - 1 downto 0);
-    islv_threshold : in    std_logic_vector(C_OUTPUT_CHANNEL * log2(C_KERNEL_SIZE ** 2 * C_INPUT_CHANNEL + 1) - 1 downto 0);
+    islv_threshold : in    std_logic_vector(C_OUTPUT_CHANNEL * log2(C_KERNEL_SIZE ** 2 * C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH + 1) - 1 downto 0);
     oslv_data      : out   std_logic_vector(C_OUTPUT_CHANNEL * C_OUTPUT_CHANNEL_BITWIDTH - 1 downto 0);
     osl_valid      : out   std_logic
   );
@@ -40,13 +39,13 @@ end entity window_convolution_activation;
 architecture behavioral of window_convolution_activation is
 
   signal sl_valid_window_ctrl : std_logic := '0';
-  signal slv_data_window_ctrl : std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
+  signal slv_data_window_ctrl : std_logic_vector(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
 
   signal slv_valid_convolution : std_logic_vector(C_OUTPUT_CHANNEL - 1 downto 0);
 
   type t_slv_array_1d is array(natural range <>) of std_logic_vector;
 
-  constant C_POST_CONVOLUTION_BITWIDTH : integer := log2(C_KERNEL_SIZE ** 2 * C_INPUT_CHANNEL + 1);
+  constant C_POST_CONVOLUTION_BITWIDTH : integer := log2(C_KERNEL_SIZE ** 2 * C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH + 1);
   signal   a_data_convolution          : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
 
   signal slv_valid_batch_normalization : std_logic_vector(C_OUTPUT_CHANNEL - 1 downto 0);
@@ -77,7 +76,7 @@ begin
 
   i_window_ctrl : entity window_ctrl_lib.window_ctrl
     generic map (
-      C_BITWIDTH    => 1 * C_INPUT_CHANNEL,
+      C_BITWIDTH    => C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH,
       C_CH_IN       => 1,
       C_CH_OUT      => 1,
       C_IMG_WIDTH   => C_IMG_WIDTH,
@@ -100,8 +99,9 @@ begin
 
     i_convolution : entity cnn_lib.convolution
       generic map (
-        C_KERNEL_SIZE   => C_KERNEL_SIZE,
-        C_INPUT_CHANNEL => C_INPUT_CHANNEL
+        C_KERNEL_SIZE            => C_KERNEL_SIZE,
+        C_INPUT_CHANNEL          => C_INPUT_CHANNEL,
+        C_INPUT_CHANNEL_BITWIDTH => C_INPUT_CHANNEL_BITWIDTH
       )
       port map (
         isl_clk      => isl_clk,

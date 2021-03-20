@@ -48,47 +48,59 @@ class Convolution(Layer):
 
         self.data_signal = Parameter(
             f"slv_data_{self.info['name']}",
-            f"std_logic_vector(C_OUTPUT_CHANNEL_{self.info['name']} * C_OUTPUT_CHANNEL_BITWIDTH_{self.info['name']} - 1 downto 0)",
+            f"std_logic_vector(C_OUTPUT_CHANNEL_{self.info['name'].upper()} * C_OUTPUT_CHANNEL_BITWIDTH_{self.info['name'].upper()} - 1 downto 0)",
         )
         self.signals.append(self.data_signal)
 
         # channel
         self.info["channel"] = int(self.constants["C_OUTPUT_CHANNEL"].value)
-        input_channel = previous_layer_info["channel"]
+        self.info["bitwidth"] = int(self.constants["C_OUTPUT_CHANNEL_BITWIDTH"].value)
         self.constants["C_INPUT_CHANNEL"] = Parameter(
-            f"C_INPUT_CHANNEL_{self.info['name']}",
+            f"C_INPUT_CHANNEL_{self.info['name'].upper()}",
             "integer",
             previous_layer_info["channel"],
         )
+        self.constants["C_INPUT_CHANNEL_BITWIDTH"] = Parameter(
+            f"C_INPUT_CHANNEL_BITWIDTH_{self.info['name'].upper()}",
+            "integer",
+            previous_layer_info["bitwidth"],
+        )
 
+        # weights
         kernel_size = int(self.constants["C_KERNEL_SIZE"].value)
-        output_channel = int(self.constants["C_OUTPUT_CHANNEL"].value)
+        input_channel = previous_layer_info["channel"]
+        output_channel = self.info["channel"]
         bitwidth = input_channel * output_channel * kernel_size ** 2
         weights = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
         self.constants["C_WEIGHTS"] = Parameter(
-            f"C_WEIGHTS_{self.info['name']}",
+            f"C_WEIGHTS_{self.info['name'].upper()}",
             f"std_logic_vector({bitwidth} - 1 downto 0)",
             f'"{weights}"',
         )
 
+        # thresholds
+        input_channel_bitwidth = previous_layer_info["bitwidth"]
         bitwidth = (
-            math.ceil(math.log2(input_channel * kernel_size ** 2 + 1)) * output_channel
+            math.ceil(
+                math.log2(input_channel * input_channel_bitwidth * kernel_size ** 2 + 1)
+            )
+            * output_channel
         )
         thresholds = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
         self.constants["C_THRESHOLDS"] = Parameter(
-            f"C_THRESHOLDS_{self.info['name']}",
+            f"C_THRESHOLDS_{self.info['name'].upper()}",
             f"std_logic_vector({bitwidth} - 1 downto 0)",
             f'"{thresholds}"',
         )
 
         # calculate new image size
         self.constants["C_IMG_WIDTH"] = Parameter(
-            f"C_IMG_WIDTH_{self.info['name']}",
+            f"C_IMG_WIDTH_{self.info['name'].upper()}",
             "integer",
             str(previous_layer_info["width"]),
         )
         self.constants["C_IMG_HEIGHT"] = Parameter(
-            f"C_IMG_HEIGHT_{self.info['name']}",
+            f"C_IMG_HEIGHT_{self.info['name'].upper()}",
             "integer",
             str(previous_layer_info["height"]),
         )
@@ -111,13 +123,13 @@ i_convolution_{self.info["name"]} : entity cnn_lib.window_convolution_activation
     C_KERNEL_SIZE => {self.constants["C_KERNEL_SIZE"].name},
     C_STRIDE      => {self.constants["C_STRIDE"].name},
 
-    C_INPUT_CHANNEL  => {self.constants["C_INPUT_CHANNEL"].name},
-    C_OUTPUT_CHANNEL => {self.constants["C_OUTPUT_CHANNEL"].name},
+    C_INPUT_CHANNEL           => {self.constants["C_INPUT_CHANNEL"].name},
+    C_INPUT_CHANNEL_BITWIDTH  => {self.constants["C_INPUT_CHANNEL_BITWIDTH"].name},
+    C_OUTPUT_CHANNEL          => {self.constants["C_OUTPUT_CHANNEL"].name},
+    C_OUTPUT_CHANNEL_BITWIDTH => {self.constants["C_OUTPUT_CHANNEL_BITWIDTH"].name},
 
     C_IMG_WIDTH  => {self.constants["C_IMG_WIDTH"].name},
-    C_IMG_HEIGHT => {self.constants["C_IMG_HEIGHT"].name},
-
-    C_OUTPUT_CHANNEL_BITWIDTH => {self.constants["C_OUTPUT_CHANNEL_BITWIDTH"].name}
+    C_IMG_HEIGHT => {self.constants["C_IMG_HEIGHT"].name}
   )
   port map (
     isl_clk        => isl_clk,
@@ -245,7 +257,13 @@ def new_size(prevous_size, kernel_size, stride, padding=0):
 
 class Bnn:
     def __init__(
-        self, image_height, image_width, input_channel, output_classes, output_bitwidth
+        self,
+        image_height,
+        image_width,
+        input_channel,
+        input_bitwidth,
+        output_classes,
+        output_bitwidth,
     ):
         self.layers = []
         self.output_classes = output_classes
@@ -253,6 +271,7 @@ class Bnn:
         self.previous_layer_info = {
             "name": "in",
             "channel": input_channel,
+            "bitwidth": input_bitwidth,
             "width": image_width,
             "height": image_height,
         }
@@ -275,11 +294,15 @@ library cnn_lib;"""
         # TODO: input_channel
         self.entity = f"""
 entity bnn is
+  generic (
+    C_INPUT_CHANNEL : integer := {self.previous_layer_info["channel"]};
+    C_INPUT_CHANNEL_BITWIDTH : integer := {self.previous_layer_info["bitwidth"]}
+  );
   port (
     isl_clk    : in    std_logic;
     isl_start  : in    std_logic;
     isl_valid  : in    std_logic;
-    islv_data  : in    std_logic_vector(8 - 1 downto 0);
+    islv_data  : in    std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
     oslv_data  : out   std_logic_vector({self.output_classes * self.output_bitwidth} - 1 downto 0);
     osl_valid  : out   std_logic;
     osl_finish : out   std_logic
@@ -296,18 +319,6 @@ end entity bnn;
         implementation = []
 
         declarations.append("-- input signals")
-        declarations.append(
-            parameter_to_vhdl(
-                "constant",
-                [
-                    Parameter(
-                        "C_INPUT_CHANNEL",
-                        "integer",
-                        self.previous_layer_info["channel"],
-                    )
-                ],
-            )
-        )
         declarations.append(
             parameter_to_vhdl(
                 "signal", [self.input_data_signal, self.input_control_signal]
@@ -350,11 +361,18 @@ end entity bnn;
 
 
 if __name__ == "__main__":
+    input_channel = 1
+    input_channel_bitwidth = 8
     output_channel = 64
     output_channel_bitwidth = 8
-    b = Bnn(8, 8, 1, output_channel, output_channel_bitwidth)
-    bn = BatchNormalization("000", [])
-    b.add_layer(bn)
+    b = Bnn(
+        8,
+        8,
+        input_channel,
+        input_channel_bitwidth,
+        output_channel,
+        output_channel_bitwidth,
+    )
     c = Convolution(
         "aaa",
         [
