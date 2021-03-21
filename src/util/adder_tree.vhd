@@ -55,9 +55,9 @@ architecture rtl of adder_tree is
 
       if (C_UNSIGNED = 1) then
         -- Pad a zero (sign) bit in case of unsigned input.
-        v_sum_init(i) := resize(signed('0' & v_input_datum), v_sum_init(0));
+        v_sum_init(i) := resize(signed('0' & v_input_datum), v_sum_init(0)'length);
       else
-        v_sum_init(i) := resize(signed(v_input_datum), v_sum_init(0));
+        v_sum_init(i) := resize(signed(v_input_datum), v_sum_init(0)'length);
       end if;
 
     end loop;
