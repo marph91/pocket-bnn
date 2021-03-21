@@ -1,6 +1,9 @@
 library ieee;
   use ieee.std_logic_1164.all;
 
+library util;
+  use util.array_pkg.all;
+
 entity serializer is
   generic (
     C_DATA_COUNT    : integer := 4;
@@ -22,11 +25,6 @@ architecture rtl of serializer is
   signal a_data : t_data;
 
   signal int_output_valid_cycles : integer range 0 to C_DATA_COUNT;
-
-  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector is
-  begin
-    return vector((int_byte_index + 1) * int_slice_size - 1 downto int_byte_index * int_slice_size);
-  end function;
 
 begin
 

@@ -6,6 +6,7 @@ library ieee;
 library cnn_lib;
 
 library util;
+  use util.array_pkg.all;
   use util.math_pkg.all;
 
 library window_ctrl_lib;
@@ -57,20 +58,6 @@ architecture behavioral of window_convolution_activation is
 
   signal a_weights   : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_KERNEL_SIZE * C_KERNEL_SIZE * C_INPUT_CHANNEL - 1 downto 0);
   signal a_threshold : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
-
-  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector is
-  begin
-    return vector((int_byte_index + 1) * int_slice_size - 1 downto int_byte_index * int_slice_size);
-  end function;
-
-  function get_fastest_increment (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector is
-    variable vector_out : std_logic_vector(vector'length / int_slice_size - 1 downto 0);
-  begin
-    for i in 0 to vector'length / int_slice_size - 1 loop
-      vector_out(i) := vector(int_index + i * int_slice_size);
-    end loop;
-    return vector_out;
-  end function;
 
 begin
 

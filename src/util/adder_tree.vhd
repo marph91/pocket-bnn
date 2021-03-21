@@ -3,6 +3,9 @@ library ieee;
   use ieee.numeric_std.all;
   use ieee.math_real.all;
 
+library util;
+  use util.array_pkg.all;
+
 entity adder_tree is
   generic (
     C_INPUT_COUNT     : integer              := 4;
@@ -50,8 +53,7 @@ architecture rtl of adder_tree is
 
     for i in 0 to C_INPUT_COUNT - 1 loop
 
-      -- TODO: use get_slice
-      v_input_datum := input_vector((i + 1) * C_INPUT_BITWIDTH - 1 downto i * C_INPUT_BITWIDTH);
+      v_input_datum := get_slice(input_vector, i, C_INPUT_BITWIDTH);
 
       if (C_UNSIGNED = 1) then
         -- Pad a zero (sign) bit in case of unsigned input.

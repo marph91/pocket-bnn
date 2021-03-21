@@ -22,6 +22,10 @@ package array_pkg is
 
   function array_to_slv (array_in : t_kernel_array) return std_logic_vector;
 
+  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector;
+
+  function get_fastest_increment (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector;
+
 end package array_pkg;
 
 package body array_pkg is
@@ -49,6 +53,20 @@ package body array_pkg is
       end loop;
     end loop;
     return slv_out;
+  end function;
+
+  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector is
+  begin
+    return vector((int_byte_index + 1) * int_slice_size - 1 downto int_byte_index * int_slice_size);
+  end function;
+
+  function get_fastest_increment (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector is
+    variable vector_out : std_logic_vector(vector'length / int_slice_size - 1 downto 0);
+  begin
+    for i in 0 to vector'length / int_slice_size - 1 loop
+      vector_out(i) := vector(int_index + i * int_slice_size);
+    end loop;
+    return vector_out;
   end function;
 
 end package body array_pkg;
