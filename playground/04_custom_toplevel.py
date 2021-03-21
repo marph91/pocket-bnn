@@ -236,6 +236,49 @@ i_batch_normalization_{self.info["name"]} : entity cnn_lib.batch_normalization
   );"""
 
 
+class Serializer(Layer):
+    def __init__(self, name, parameter):
+        super().__init__(name, parameter)
+
+        self.control_signal = Parameter(f"sl_valid_{self.info['name']}", "std_logic")
+        self.signals = [self.control_signal]
+
+    def update(self, previous_layer_info):
+        self.previous_name = previous_layer_info["name"]
+
+        self.constants["C_DATA_COUNT"] = Parameter(
+            f"C_DATA_COUNT_{self.info['name'].upper()}",
+            "integer",
+            previous_layer_info["channel"],
+        )
+        self.constants["C_DATA_BITWIDTH"] = Parameter(
+            f"C_DATA_BITWIDTH_{self.info['name'].upper()}",
+            "integer",
+            previous_layer_info["bitwidth"],
+        )
+
+        self.data_signal = Parameter(
+            f"slv_data_{self.info['name']}",
+            f"std_logic_vector({self.constants['C_DATA_BITWIDTH'].name} - 1 downto 0)",
+        )
+        self.signals.append(self.data_signal)
+
+    def get_instance(self):
+        return f"""
+i_serializer_{self.info["name"]} : entity util.serializer
+  generic map (
+    C_DATA_COUNT    => {self.constants["C_DATA_COUNT"].name},
+    C_DATA_BITWIDTH => {self.constants["C_DATA_BITWIDTH"].name}
+  )
+  port map (
+    isl_clk        => isl_clk,
+    isl_valid      => sl_valid_{self.previous_name},
+    islv_data      => slv_data_{self.previous_name},
+    oslv_data      => {self.data_signal.name},
+    osl_valid      => {self.control_signal.name}
+  );"""
+
+
 def parameter_to_vhdl(type_, parameter):
     vhdl = []
     for par in parameter:
@@ -289,7 +332,8 @@ class Bnn:
 library ieee;
   use ieee.std_logic_1164.all;
 
-library cnn_lib;"""
+library cnn_lib;
+library util;"""
 
         # TODO: input_channel
         self.entity = f"""
@@ -303,7 +347,7 @@ entity bnn is
     isl_start  : in    std_logic;
     isl_valid  : in    std_logic;
     islv_data  : in    std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
-    oslv_data  : out   std_logic_vector({self.output_classes * self.output_bitwidth} - 1 downto 0);
+    oslv_data  : out   std_logic_vector({self.output_bitwidth} - 1 downto 0);
     osl_valid  : out   std_logic;
     osl_finish : out   std_logic
   );
@@ -329,6 +373,9 @@ end entity bnn;
         # connect input signals
         implementation.append(f"{self.input_control_signal.name} <= isl_valid;")
         implementation.append(f"{self.input_data_signal.name} <= islv_data;")
+
+        # append the output serializer
+        self.layers.append(Serializer("output", []))
 
         # parse the bnn
         for layer in self.layers:
@@ -363,7 +410,7 @@ end entity bnn;
 if __name__ == "__main__":
     input_channel = 1
     input_channel_bitwidth = 8
-    output_channel = 64
+    output_channel = 8
     output_channel_bitwidth = 8
     b = Bnn(
         8,
@@ -413,6 +460,16 @@ if __name__ == "__main__":
     b.add_layer(c)
     c = Convolution(
         "ddd",
+        [
+            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "1"),
+            Parameter("C_STRIDE", "integer", "1"),
+            Parameter("C_OUTPUT_CHANNEL", "integer", "64"),
+            Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", "1"),
+        ],
+    )
+    b.add_layer(c)
+    c = Convolution(
+        "eee",
         [
             Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "1"),
             Parameter("C_STRIDE", "integer", "1"),
