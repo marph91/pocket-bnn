@@ -9,7 +9,7 @@ from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import get_files, record_waveform
+from test_utils.general import get_files
 
 
 @cocotb.test()
@@ -48,7 +48,7 @@ async def run_test(dut):
         ), f"{dut.oslv_data.value.integer} /= {case.output_data}"
 
 
-def test_batch_normalization(record_waveform):
+def test_batch_normalization():
     generics = {}
     run(
         vhdl_sources=get_files(
@@ -58,5 +58,4 @@ def test_batch_normalization(record_waveform):
         module="test_batch_normalization",
         compile_args=["--work=cnn_lib", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=batch_normalization.ghw"] if record_waveform else None,
     )

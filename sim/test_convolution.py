@@ -10,7 +10,7 @@ from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import get_files, record_waveform
+from test_utils.general import get_files
 
 
 def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
@@ -81,7 +81,7 @@ async def run_test(dut):
 
 @pytest.mark.parametrize("kernel_size", range(2, 7))
 @pytest.mark.parametrize("input_channel", (1, 4, 9))
-def test_convolution(record_waveform, kernel_size, input_channel):
+def test_convolution(kernel_size, input_channel):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
         "C_INPUT_CHANNEL": input_channel,
@@ -94,5 +94,4 @@ def test_convolution(record_waveform, kernel_size, input_channel):
         module="test_convolution",
         compile_args=["--work=cnn_lib", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=convolution.ghw"] if record_waveform else None,
     )

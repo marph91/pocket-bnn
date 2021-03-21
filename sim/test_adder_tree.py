@@ -12,7 +12,7 @@ from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import ImageMonitor, Tick
-from test_utils.general import get_files, record_waveform
+from test_utils.general import get_files
 
 
 def to_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
@@ -109,7 +109,7 @@ async def run_test(dut):
 
 @pytest.mark.parametrize("is_unsigned", (0, 1))
 @pytest.mark.parametrize("input_bitwidth", (1, 4, 8))
-def test_adder_tree(record_waveform, is_unsigned, input_bitwidth):
+def test_adder_tree(is_unsigned, input_bitwidth):
     generics = {
         "C_INPUT_COUNT": randint(1, 16),
         "C_INPUT_BITWIDTH": input_bitwidth,
@@ -130,5 +130,4 @@ def test_adder_tree(record_waveform, is_unsigned, input_bitwidth):
         module="test_adder_tree",
         compile_args=["--work=util", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=adder_tree.ghw"] if record_waveform else None,
     )

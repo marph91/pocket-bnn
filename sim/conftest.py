@@ -11,10 +11,13 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # ERROR
 
 
 def pytest_addoption(parser):
-    parser.addoption("--wave", action="store_true", help="Record the waveform.")
+    parser.addoption("--waves", action="store_true", help="Record the waveform.")
 
 
 def pytest_configure(config):
     analyze_json()
     analyze_util()
     analyze_window_ctrl_lib()
+
+    if config.getoption("--waves"):
+        os.environ["WAVES"] = "1"

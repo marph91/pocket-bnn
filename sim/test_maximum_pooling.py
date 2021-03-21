@@ -10,7 +10,7 @@ from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import get_files, record_waveform
+from test_utils.general import get_files
 
 
 def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
@@ -72,7 +72,7 @@ async def run_test(dut):
 
 @pytest.mark.parametrize("kernel_size", (2, 3))
 @pytest.mark.parametrize("channel", (1, 6))
-def test_maximum_pooling(record_waveform, kernel_size, channel):
+def test_maximum_pooling(kernel_size, channel):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
         "C_CHANNEL": channel,
@@ -85,5 +85,4 @@ def test_maximum_pooling(record_waveform, kernel_size, channel):
         module="test_maximum_pooling",
         compile_args=["--work=cnn_lib", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=maximum_pooling.ghw"] if record_waveform else None,
     )

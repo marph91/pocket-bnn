@@ -8,11 +8,6 @@ from typing import List, Optional, Sequence
 import pytest
 
 
-@pytest.fixture
-def record_waveform(request):
-    return request.config.getoption("--wave")
-
-
 def position_to_index(col: int, row: int, width: int, height: int) -> int:
     index = row * width + col
     assert index < width * height

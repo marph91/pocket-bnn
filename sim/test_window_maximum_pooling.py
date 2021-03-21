@@ -13,7 +13,7 @@ import pytest
 import tensorflow as tf
 
 from test_utils.cocotb_helpers import ImageMonitor, Tick
-from test_utils.general import concatenate_channel, get_files, record_waveform
+from test_utils.general import concatenate_channel, get_files
 
 random.seed(100)  # TODO: fixture
 
@@ -116,7 +116,7 @@ async def run_test(dut):
         (3, 2, 9),
     ],
 )
-def test_window_maximum_pooling(record_waveform, kernel_size, stride, channel):
+def test_window_maximum_pooling(kernel_size, stride, channel):
     generics = {
         "C_KERNEL_SIZE": kernel_size,
         "C_STRIDE": stride,
@@ -132,5 +132,4 @@ def test_window_maximum_pooling(record_waveform, kernel_size, stride, channel):
         module="test_window_maximum_pooling",
         compile_args=["--work=cnn_lib", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=window_maximum_pooling.ghw"] if record_waveform else None,
     )

@@ -20,7 +20,6 @@ from test_utils.general import (
     concatenate_channel,
     concatenate_integers,
     get_files,
-    record_waveform,
 )
 
 random.seed(100)  # TODO: fixture
@@ -231,7 +230,7 @@ async def run_test(dut):
     ],
 )
 def test_window_convolution_activation(
-    record_waveform, kernel_size, stride, input_channel, output_channel
+    kernel_size, stride, input_channel, output_channel
 ):
     # TODO: Add test for output bitwidth /= 1.
     generics = {
@@ -250,7 +249,4 @@ def test_window_convolution_activation(
         module="test_window_convolution_activation",
         compile_args=["--work=cnn_lib", "--std=08"],
         parameters=generics,
-        sim_args=["--wave=window_convolution_activation.ghw"]
-        if record_waveform
-        else None,
     )
