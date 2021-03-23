@@ -1,7 +1,4 @@
 [libraries]
-json.files = [
-  "submodules/JSON-for-VHDL/src/*.vhdl"
-]
 util.files = [
   "src/util/*.vhd",
 ]

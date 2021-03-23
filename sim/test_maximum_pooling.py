@@ -10,16 +10,7 @@ from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import get_files
-
-
-def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
-    concatenated_integer = 0
-    for value in integer_list:
-        if value > 2 ** bitwidth:
-            raise ValueError(f"Value {value} exeeds range.")
-        concatenated_integer = (concatenated_integer << bitwidth) + value
-    return concatenated_integer
+from test_utils.general import concatenate_integers, get_files
 
 
 @cocotb.test()

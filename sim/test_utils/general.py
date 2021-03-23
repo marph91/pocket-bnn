@@ -5,6 +5,7 @@ import pathlib
 from random import randint
 from typing import List, Optional, Sequence
 
+from bitstring import Bits
 import pytest
 
 
@@ -63,3 +64,20 @@ def concatenate_channel(image, channel, bitwidth=1):
         )
         for pixel_index in range(0, len(image), channel)
     ]
+
+
+def to_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
+    """Convert signed int to fixed int."""
+    if is_unsigned:
+        number_dict = {"uint": number, "length": bitwidth}
+    else:
+        number_dict = {"int": number, "length": bitwidth}
+    return int(Bits(**number_dict).bin, 2)
+
+
+def from_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
+    """Convert fixed int to signed int."""
+    number_bin = bin(number)[2:].zfill(bitwidth)
+    if is_unsigned:
+        return Bits(bin=number_bin).uint
+    return Bits(bin=number_bin).int

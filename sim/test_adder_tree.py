@@ -12,33 +12,12 @@ from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import ImageMonitor, Tick
-from test_utils.general import get_files
-
-
-def to_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
-    """Convert signed int to fixed int."""
-    if is_unsigned:
-        number_dict = {"uint": number, "length": bitwidth}
-    else:
-        number_dict = {"int": number, "length": bitwidth}
-    return int(Bits(**number_dict).bin, 2)
-
-
-def from_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
-    """Convert fixed int to signed int."""
-    number_bin = bin(number)[2:].zfill(bitwidth)
-    if is_unsigned:
-        return Bits(bin=number_bin).uint
-    return Bits(bin=number_bin).int
-
-
-def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
-    concatenated_integer = 0
-    for value in integer_list:
-        if value > 2 ** bitwidth:
-            raise ValueError(f"Value {value} exeeds range.")
-        concatenated_integer = (concatenated_integer << bitwidth) + value
-    return concatenated_integer
+from test_utils.general import (
+    concatenate_integers,
+    from_fixedint,
+    to_fixedint,
+    get_files,
+)
 
 
 @cocotb.test()
