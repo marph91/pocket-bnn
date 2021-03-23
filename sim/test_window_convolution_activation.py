@@ -127,7 +127,9 @@ async def run_test(dut):
 
             return concatenate_integers(
                 self.replace_minus(threshold),
-                bitwidth=math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1)),
+                bitwidth=bitwidth
+                + math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1))
+                + 1,
             )
 
     cases = (
@@ -214,6 +216,7 @@ async def run_test(dut):
 
 
 # Don't run the full test matrix. Only the most common configs.
+# TODO: Add test for 8 bit input.
 @pytest.mark.parametrize(
     "kernel_size,stride,input_channel,output_channel",
     [

@@ -80,11 +80,10 @@ class Convolution(Layer):
 
         # thresholds
         input_channel_bitwidth = previous_layer_info["bitwidth"]
-        bitwidth = (
-            math.ceil(
-                math.log2(input_channel * input_channel_bitwidth * kernel_size ** 2 + 1)
-            )
-            * output_channel
+        bitwidth = output_channel * (
+            input_channel_bitwidth
+            + math.ceil(math.log2(input_channel * kernel_size ** 2 + 1))
+            + 1
         )
         thresholds = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
         self.constants["C_THRESHOLDS"] = Parameter(
@@ -319,7 +318,6 @@ class Bnn:
             "height": image_height,
         }
 
-        # TODO: input_channel
         self.input_data_signal = Parameter(
             f"slv_data_{self.previous_layer_info['name']}",
             f"std_logic_vector(8 - 1 downto 0)",
@@ -335,7 +333,6 @@ library ieee;
 library cnn_lib;
 library util;"""
 
-        # TODO: input_channel
         self.entity = f"""
 entity bnn is
   generic (
