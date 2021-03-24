@@ -66,6 +66,7 @@ class Convolution(Layer):
             previous_layer_info["bitwidth"],
         )
 
+        # TODO: Weights and threshold as parameter and sanity check.
         # weights
         kernel_size = int(self.constants["C_KERNEL_SIZE"].value)
         input_channel = previous_layer_info["channel"]
@@ -202,36 +203,6 @@ i_maximum_pooling_{self.info["name"]} : entity cnn_lib.window_maximum_pooling
     islv_data => slv_data_{self.previous_name},
     oslv_data => {self.data_signal.name},
     osl_valid => {self.control_signal.name}
-  );"""
-
-
-class BatchNormalization(Layer):
-    def __init__(self, name, parameter):
-        super().__init__(name, parameter)
-
-        self.constants = {}
-        self.control_signal = Parameter(f"sl_valid_{self.info['name']}", "std_logic")
-        self.data_signal = Parameter(
-            f"slv_data_{self.info['name']}", "std_logic_vector(1 - 1 downto 0)"
-        )
-        self.signals = [self.data_signal, self.control_signal]
-
-    def update(self, previous_layer_info):
-        self.previous_name = previous_layer_info["name"]
-
-    def get_instance(self):
-        return f"""
-i_batch_normalization_{self.info["name"]} : entity cnn_lib.batch_normalization
-  generic map (
-    C_POST_CONVOLUTION_BITWIDTH => 8
-  )
-  port map (
-    isl_clk        => isl_clk,
-    isl_valid      => sl_valid_{self.previous_name},
-    islv_data      => slv_data_{self.previous_name},
-    islv_threshold => "10000000",
-    oslv_data      => {self.data_signal.name},
-    osl_valid      => {self.control_signal.name}
   );"""
 
 
