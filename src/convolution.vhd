@@ -51,8 +51,6 @@ begin
 
     begin
 
-      report to_string(slv_data_out'length) & " " & to_string(slv_data_adder'length);
-
       if (rising_edge(isl_clk)) then
         sl_popcount <= '0';
         sl_add      <= '0';

@@ -32,7 +32,6 @@ def tensor_to_list(tensor):
 @cocotb.test()
 async def run_test(dut):
     # layer parameter
-    bitwidth = 1
     kernel_size = (dut.C_KERNEL_SIZE.value.integer,) * 2
     stride = (dut.C_STRIDE.value.integer,) * 2
     image_shape = (
@@ -41,6 +40,12 @@ async def run_test(dut):
         dut.C_INPUT_CHANNEL.value.integer,
     )
     output_channel = dut.C_OUTPUT_CHANNEL.value.integer
+    output_channel_bitwidth = dut.C_OUTPUT_CHANNEL_BITWIDTH.value.integer
+
+    # Needed to compensate the offset caused by converting between -1 (LARQ) and 0 (hdl).
+    # Conversion from LARQ format [-1, 1] to pocket-bnn format [0, 1] (positive only):
+    # make the threshold compatible to positive only values
+    fan_in = kernel_size[0] ** 2 * image_shape[2]
 
     # define the reference model
     batch_shape = (1,) + image_shape
@@ -52,8 +57,12 @@ async def run_test(dut):
         use_bias=False,
         name="test_conv",
     )(input_)
-    x = tf.keras.layers.BatchNormalization(name="test_batchnorm")(x)
-    output_ = lq.quantizers.SteHeaviside()(x)
+    if output_channel_bitwidth == 1:
+        x = tf.keras.layers.BatchNormalization(name="test_batchnorm")(x)
+        output_ = lq.quantizers.SteHeaviside()(x)
+    else:
+        # There is no batchnorm for output bitwidth > 1
+        output_ = x
     model = tf.keras.Model(inputs=input_, outputs=output_)
 
     # TODO: Try to set realistic batchnorm parameter.
@@ -86,7 +95,7 @@ async def run_test(dut):
         def input_data(self) -> int:
             # send all channels (i. e. one pixel) at a time
             return concatenate_channel(
-                self.replace_minus(self.input_image), image_shape[2], bitwidth
+                self.replace_minus(self.input_image), image_shape[2], 1
             )
 
         @property
@@ -94,16 +103,27 @@ async def run_test(dut):
             # inference
             image_tensor = tf.convert_to_tensor(self.input_image)
             reshaped_tensor = tf.reshape(image_tensor, batch_shape)
-            result = model(reshaped_tensor)
-            result_list = list(result.numpy().astype("uint8").flat)
-            return concatenate_channel(result_list, output_channel, bitwidth)
+            result = model(reshaped_tensor).numpy()
+
+            if output_channel_bitwidth > 1:
+                # compensate (see also threshold for batchnorm)
+                result = (result + fan_in) / 2
+
+            result_list = list(result.astype("uint8").flat)
+            assert all(r >= 0 for r in result_list)
+            return concatenate_channel(result_list, output_channel, output_channel_bitwidth)
 
         def get_weights(self):
+            # Only binary weights are supported.
             return concatenate_integers(
-                self.replace_minus(self.weights), bitwidth=bitwidth
+                self.replace_minus(self.weights), bitwidth=1
             )
 
         def get_threshold(self):
+            # There is no batchnorm for output bitwidth > 1
+            if output_channel_bitwidth > 1:
+                return 0
+
             threshold = []
             batchnorm_params = [
                 a.tolist() for a in model.get_layer("test_batchnorm").get_weights()
@@ -117,9 +137,6 @@ async def run_test(dut):
                 # see also: https://arxiv.org/pdf/1612.07119.pdf, 4.2.2 Batchnorm-activation as Threshold
                 threshold_batchnorm = mean - (beta / (variance * epsilon - gamma))
 
-                # Conversion from LARQ format [-1, 1] to pocket-bnn format [0, 1] (positive only):
-                # make the threshold compatible to positive only values
-                fan_in = kernel_size[0] ** 2 * image_shape[2]  # max value
                 # get the following formula by solving:
                 # x - y = fan_in; x + y = threshold
                 threshold_pos = (threshold_batchnorm + fan_in) / 2
@@ -127,7 +144,7 @@ async def run_test(dut):
 
             return concatenate_integers(
                 self.replace_minus(threshold),
-                bitwidth=bitwidth
+                bitwidth=1
                 + math.ceil(math.log2(kernel_size[0] ** 2 * image_shape[2] + 1))
                 + 1,
             )
@@ -173,7 +190,7 @@ async def run_test(dut):
         dut.osl_valid,
         dut.isl_clk,
         1,
-        bitwidth * output_channel,
+        output_channel * output_channel_bitwidth,
     )
     dut.isl_valid <= 0
     dut.isl_start <= 0
@@ -181,15 +198,12 @@ async def run_test(dut):
 
     # run the specific testcases
     for case in cases:
-        # print("eee", model.get_layer("test_conv").get_weights()[0].shape)
         reshaped_weights = [
             np.array(case.weights).reshape(
                 kernel_size + (image_shape[2], output_channel)
             )
         ]
         model.get_layer("test_conv").set_weights(reshaped_weights)
-        # print("reshaped weights", reshaped_weights)
-        # print("fff", model.get_layer("test_conv").get_weights()[0][:, :, :, 0])
 
         dut.islv_weights <= case.get_weights()
         dut.islv_threshold <= case.get_threshold()
@@ -216,31 +230,34 @@ async def run_test(dut):
 
 
 # Don't run the full test matrix. Only the most common configs.
-# TODO: Add test for 8 bit input.
 @pytest.mark.parametrize(
-    "kernel_size,stride,input_channel,output_channel",
+    "kernel_size,stride,input_channel,output_channel,output_channel_bitwidth",
     [
-        (1, 1, 4, 8),
-        (2, 1, 4, 8),
-        (2, 2, 4, 8),
-        (3, 1, 4, 8),
-        (3, 1, 1, 4),
-        (3, 1, 3, 8),
-        (3, 1, 8, 16),
-        (3, 2, 4, 8),
-        (5, 1, 4, 8),
-        (7, 1, 4, 8),
+        (1, 1, 4, 8, 1),
+        (2, 1, 4, 8, 1),
+        (2, 2, 4, 8, 1),
+        (3, 1, 4, 8, 1),
+        (3, 1, 4, 8, 8),
+        (3, 1, 1, 4, 1),
+        (3, 1, 3, 8, 1),
+        (3, 1, 8, 16, 1),
+        (3, 2, 4, 8, 1),
+        (5, 1, 4, 8, 1),
+        (7, 1, 4, 8, 1),
     ],
 )
 def test_window_convolution_activation(
-    kernel_size, stride, input_channel, output_channel
+    kernel_size, stride, input_channel, output_channel, output_channel_bitwidth
 ):
-    # TODO: Add test for output bitwidth /= 1.
+    # Input channel bitwidth > 1 is tested at convolution level.
+    input_channel_bitwidth = 1
     generics = {
         "C_KERNEL_SIZE": kernel_size,
         "C_STRIDE": stride,
         "C_INPUT_CHANNEL": input_channel,
+        "C_INPUT_CHANNEL_BITWIDTH": input_channel_bitwidth,
         "C_OUTPUT_CHANNEL": output_channel,
+        "C_OUTPUT_CHANNEL_BITWIDTH": output_channel_bitwidth,
         "C_IMG_WIDTH": 8,
         "C_IMG_HEIGHT": 8,
     }
