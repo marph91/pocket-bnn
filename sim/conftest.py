@@ -1,4 +1,5 @@
 import os
+import random
 
 from test_utils.extra_libs import analyze_json, analyze_util, analyze_window_ctrl_lib
 
@@ -8,6 +9,9 @@ os.environ["SIM"] = "ghdl"
 
 # https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # ERROR
+
+
+random.seed(42)
 
 
 def pytest_addoption(parser):

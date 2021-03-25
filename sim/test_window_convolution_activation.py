@@ -22,8 +22,6 @@ from test_utils.general import (
     get_files,
 )
 
-random.seed(100)  # TODO: fixture
-
 
 def tensor_to_list(tensor):
     return list(tensor.numpy().astype("uint8").flat)

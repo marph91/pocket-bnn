@@ -15,8 +15,6 @@ import tensorflow as tf
 from test_utils.cocotb_helpers import ImageMonitor, Tick
 from test_utils.general import concatenate_channel, get_files
 
-random.seed(100)  # TODO: fixture
-
 
 @cocotb.test()
 async def run_test(dut):
