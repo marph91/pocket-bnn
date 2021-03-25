@@ -24,6 +24,7 @@ SOURCES_WINDOW_CTRL = \
 	$(ROOT_DIR)/src/window_ctrl/window_buffer.vhd \
 	$(ROOT_DIR)/src/window_ctrl/window_ctrl.vhd
 SOURCES_BNN = \
+	$(ROOT_DIR)/src/average_pooling.vhd \
 	$(ROOT_DIR)/src/batch_normalization.vhd \
 	$(ROOT_DIR)/src/convolution.vhd \
 	$(ROOT_DIR)/src/window_convolution_activation.vhd \

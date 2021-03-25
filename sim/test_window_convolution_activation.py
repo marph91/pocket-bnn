@@ -111,13 +111,13 @@ async def run_test(dut):
 
             result_list = list(result.astype("uint8").flat)
             assert all(r >= 0 for r in result_list)
-            return concatenate_channel(result_list, output_channel, output_channel_bitwidth)
+            return concatenate_channel(
+                result_list, output_channel, output_channel_bitwidth
+            )
 
         def get_weights(self):
             # Only binary weights are supported.
-            return concatenate_integers(
-                self.replace_minus(self.weights), bitwidth=1
-            )
+            return concatenate_integers(self.replace_minus(self.weights), bitwidth=1)
 
         def get_threshold(self):
             # There is no batchnorm for output bitwidth > 1

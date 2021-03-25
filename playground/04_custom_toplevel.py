@@ -249,6 +249,63 @@ i_serializer_{self.info["name"]} : entity util.serializer
   );"""
 
 
+class AveragePooling(Layer):
+    def __init__(self, name, parameter):
+        super().__init__(name, parameter)
+
+        self.control_signal = Parameter(f"sl_valid_{self.info['name']}", "std_logic")
+        self.signals = [self.control_signal]
+
+    def update(self, previous_layer_info):
+        self.previous_name = previous_layer_info["name"]
+
+        self.constants["C_BITWIDTH"] = Parameter(
+            f"C_BITWIDTH_{self.info['name'].upper()}",
+            "integer",
+            previous_layer_info["bitwidth"],
+        )
+        self.constants["C_CHANNEL"] = Parameter(
+            f"C_CHANNEL_{self.info['name'].upper()}",
+            "integer",
+            previous_layer_info["channel"],
+        )
+        self.constants["C_IMG_WIDTH"] = Parameter(
+            f"C_IMG_WIDTH_{self.info['name']}",
+            "integer",
+            str(previous_layer_info["width"]),
+        )
+        self.constants["C_IMG_HEIGHT"] = Parameter(
+            f"C_IMG_HEIGHT_{self.info['name']}",
+            "integer",
+            str(previous_layer_info["height"]),
+        )
+
+        self.data_signal = Parameter(
+            f"slv_data_{self.info['name']}",
+            f"std_logic_vector({self.constants['C_BITWIDTH'].name} - 1 downto 0)",
+        )
+        self.signals.append(self.data_signal)
+
+    def get_instance(self):
+        return f"""
+i_average_pooling_{self.info["name"]} : entity cnn_lib.average_pooling
+  generic map (
+    C_BITWIDTH   => {self.constants["C_BITWIDTH"].name},
+
+    C_CHANNEL    => {self.constants["C_CHANNEL"].name},
+    C_IMG_WIDTH  => {self.constants["C_IMG_WIDTH"].name},
+    C_IMG_HEIGHT => {self.constants["C_IMG_HEIGHT"].name}
+  )
+  port map (
+    isl_clk   => isl_clk,
+    isl_start => isl_start,
+    isl_valid => sl_valid_{self.previous_name},
+    islv_data => slv_data_{self.previous_name},
+    oslv_data => {self.data_signal.name},
+    osl_valid => {self.control_signal.name}
+  );"""
+
+
 def parameter_to_vhdl(type_, parameter):
     vhdl = []
     for par in parameter:
@@ -346,7 +403,8 @@ end entity bnn;
         implementation.append(f"{self.input_data_signal.name} <= islv_data;")
 
         # append the output serializer
-        self.layers.append(Serializer("output", []))
+        # self.layers.append(Serializer("output", []))
+        self.layers.append(AveragePooling("output", []))
 
         # parse the bnn
         for layer in self.layers:
