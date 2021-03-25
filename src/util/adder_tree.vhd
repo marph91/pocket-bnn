@@ -50,7 +50,8 @@ architecture rtl of adder_tree is
     -- Pad with zeros to widen from input bitwidth to output bitwidth.
     -- Input gets extended by 1 bit at each stage.
     assert C_OUTPUT_BITWIDTH >= C_INPUT_BITWIDTH + C_STAGES
-      report "required bitwidth: " & to_string(C_INPUT_BITWIDTH + C_STAGES) & ", actual bitwidth: " & to_string(C_OUTPUT_BITWIDTH);
+      report "required bitwidth: " & to_string(C_INPUT_BITWIDTH + C_STAGES) & ", actual bitwidth: " & to_string(C_OUTPUT_BITWIDTH)
+      severity failure;
     v_input_datum := (others => '0');
 
     for i in 0 to C_INPUT_COUNT - 1 loop

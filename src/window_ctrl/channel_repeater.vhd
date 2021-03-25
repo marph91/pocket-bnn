@@ -37,7 +37,9 @@ architecture behavior of channel_repeater is
 
 begin
 
-  assert (C_CH mod C_PARALLEL_CH = 0) report "invalid parallelization factor " & to_string(C_PARALLEL_CH);
+  assert (C_CH mod C_PARALLEL_CH = 0)
+    report "invalid parallelization factor " & to_string(C_PARALLEL_CH)
+    severity failure;
 
   gen_data : if C_PARALLEL_CH = 1 generate
     -- isl_valid and osl_valid can be active at the same time,

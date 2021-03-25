@@ -90,7 +90,7 @@ begin
 
     else generate
 
-      assert C_MAX mod C_INCREMENT = 0;
+      assert C_MAX mod C_INCREMENT = 0 severity failure;
 
       gen_power_of_two : if is_power_of_two(C_MAX) generate
 
