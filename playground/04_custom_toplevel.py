@@ -307,6 +307,9 @@ library util;"""
         self.entity = f"""
 entity bnn is
   generic (
+    -- TODO: Height and width are only used for the testsuite.
+    C_INPUT_HEIGHT : integer := {self.previous_layer_info["height"]};
+    C_INPUT_WIDTH : integer := {self.previous_layer_info["width"]};
     C_INPUT_CHANNEL : integer := {self.previous_layer_info["channel"]};
     C_INPUT_CHANNEL_BITWIDTH : integer := {self.previous_layer_info["bitwidth"]}
   );
@@ -381,8 +384,8 @@ if __name__ == "__main__":
     output_channel = 8
     output_channel_bitwidth = 8
     b = Bnn(
-        8,
-        8,
+        22,
+        22,
         input_channel,
         input_channel_bitwidth,
         output_channel,
