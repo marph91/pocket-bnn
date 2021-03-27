@@ -39,7 +39,7 @@ architecture rtl of adder_tree is
 
   type t_sums is array (natural range <>) of signed(C_OUTPUT_BITWIDTH + C_UNSIGNED - 1 downto 0);
 
-  signal a_sums : t_sums(0 to 2 * C_INPUTS_FIRST_STAGE - 1);
+  signal a_sums : t_sums(0 to 2 * C_INPUTS_FIRST_STAGE - 2);
 
   function convert_input (input_vector : std_logic_vector) return t_sums is
     variable v_sum_init    : t_sums(0 to C_INPUTS_FIRST_STAGE - 1);
@@ -50,7 +50,8 @@ architecture rtl of adder_tree is
     -- Pad with zeros to widen from input bitwidth to output bitwidth.
     -- Input gets extended by 1 bit at each stage.
     assert C_OUTPUT_BITWIDTH >= C_INPUT_BITWIDTH + C_STAGES
-      report "required bitwidth: " & to_string(C_INPUT_BITWIDTH + C_STAGES) & ", actual bitwidth: " & to_string(C_OUTPUT_BITWIDTH)
+      report "required bitwidth for full precision: " & to_string(C_INPUT_BITWIDTH + C_STAGES) &
+             ", actual bitwidth: " & to_string(C_OUTPUT_BITWIDTH)
       severity failure;
     v_input_datum := (others => '0');
 
@@ -96,6 +97,6 @@ begin
   end process proc_adder_tree;
 
   osl_valid <= slv_sum_stage(slv_sum_stage'high);
-  oslv_data <= std_logic_vector(a_sums(a_sums'high - 1)(C_OUTPUT_BITWIDTH - 1 downto 0));
+  oslv_data <= std_logic_vector(a_sums(a_sums'high)(C_OUTPUT_BITWIDTH - 1 downto 0));
 
 end architecture rtl;
