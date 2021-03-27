@@ -1,0 +1,226 @@
+Test parallelization of "convolution.vhd" for synthesis
+Based on commit ebe1cade.
+
+C_PARALLEL_POPCOUNT = 9
+
+=== bnn ===
+
+   Number of wires:               6858
+   Number of wire bits:          40792
+   Number of public wires:        6858
+   Number of public wire bits:   40792
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               8654
+     CCU2C                         866
+     L6MUX21                       296
+     LUT4                         2593
+     PFUMX                         777
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4102
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4688/41820    11%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 8
+
+=== bnn ===
+
+   Number of wires:               6953
+   Number of wire bits:          44416
+   Number of public wires:        6953
+   Number of public wire bits:   44416
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               9107
+     CCU2C                         944
+     L6MUX21                       334
+     LUT4                         2613
+     PFUMX                         704
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4492
+    
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  5009/41820    11%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 7
+
+=== bnn ===
+
+   Number of wires:               5419
+   Number of wire bits:          47184
+   Number of public wires:        5419
+   Number of public wire bits:   47184
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               7188
+     CCU2C                         811
+     L6MUX21                        41
+     LUT4                         1794
+     PFUMX                         244
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4278
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4336/41820    10%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 6
+
+=== bnn ===
+
+   Number of wires:               5178
+   Number of wire bits:          45606
+   Number of public wires:        5178
+   Number of public wire bits:   45606
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               7212
+     CCU2C                         835
+     L6MUX21                        15
+     LUT4                         1776
+     PFUMX                         131
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4435
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4408/41820    10%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 5
+
+=== bnn ===
+
+   Number of wires:               5413
+   Number of wire bits:          48234
+   Number of public wires:        5413
+   Number of public wire bits:   48234
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               7525
+     CCU2C                         895
+     L6MUX21                         3
+     LUT4                         1774
+     PFUMX                         156
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4677
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4527/41820    10%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 4
+
+=== bnn ===
+
+   Number of wires:               5261
+   Number of wire bits:          52952
+   Number of public wires:        5261
+   Number of public wire bits:   52952
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               8029
+     CCU2C                         973
+     L6MUX21                         3
+     LUT4                         1804
+     PFUMX                          11
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   5218
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  5064/41820    12%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 3
+
+=== bnn ===
+
+   Number of wires:               5360
+   Number of wire bits:          58077
+   Number of public wires:        5360
+   Number of public wire bits:   58077
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               7425
+     CCU2C                         835
+     L6MUX21                         3
+     LUT4                         1768
+     PFUMX                          11
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   4788
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4431/41820    10%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 2
+
+=== bnn ===
+
+   Number of wires:               6030
+   Number of wire bits:          70824
+   Number of public wires:        6030
+   Number of public wire bits:   70824
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               8560
+     CCU2C                         973
+     L6MUX21                         3
+     LUT4                         2185
+     PFUMX                          12
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   5367
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4932/41820    11%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
+
+
+C_PARALLEL_POPCOUNT = 1
+
+=== bnn ===
+
+   Number of wires:               6396
+   Number of wire bits:          99565
+   Number of public wires:        6396
+   Number of public wire bits:   99565
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               8994
+     CCU2C                         960
+     L6MUX21                         3
+     LUT4                         2425
+     PFUMX                          11
+     TRELLIS_DPR16X4                20
+     TRELLIS_FF                   5575
+
+Info: Device utilisation:
+Info:          TRELLIS_SLICE:  4915/41820    11%
+Info:             TRELLIS_IO:    21/  365     5%
+Info:                   DCCA:     1/   56     1%
