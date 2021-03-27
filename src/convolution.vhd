@@ -32,7 +32,7 @@ architecture behavioral of convolution is
 begin
 
   gen_matrix_multiplication : if C_INPUT_CHANNEL_BITWIDTH = 1 generate
-    constant C_PARALLEL_POPCOUNT       : integer := 4;
+    constant C_PARALLEL_POPCOUNT       : integer := 7;
     constant C_SPLIT                   : integer := integer(ceil(real(islv_data'length) / real(C_PARALLEL_POPCOUNT)));
     constant C_INPUT_BITWIDTH_ADDER    : integer := log2(C_PARALLEL_POPCOUNT + 1);
     constant C_PADDED_BITWIDTH_PRODUCT : integer := C_PARALLEL_POPCOUNT * C_SPLIT;
@@ -47,7 +47,7 @@ begin
 
     proc_xnor_popcount : process (isl_clk) is
 
-      variable v_usig_popcount : unsigned(2 downto 0);
+      variable v_usig_popcount : unsigned(C_INPUT_BITWIDTH_ADDER - 1 downto 0);
 
     begin
 
