@@ -8,7 +8,7 @@ library util;
 
 entity channel_repeater is
   generic (
-    C_BITWIDTH : integer range 1 to 32 := 8;
+    C_BITWIDTH : integer := 8;
 
     C_CH          : integer range 1 to 512 := 16;
     C_REPEAT      : integer range 1 to 512 := 32;

@@ -9,7 +9,7 @@ library util;
 
 entity line_buffer is
   generic (
-    C_BITWIDTH : integer range 1 to 64 := 8;
+    C_BITWIDTH : integer := 8;
 
     C_CH        : integer range 1 to 1024 := 16;
     C_IMG_WIDTH : integer range 1 to 2048 := 20;

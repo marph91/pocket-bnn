@@ -8,7 +8,7 @@ library util;
 
 entity window_buffer is
   generic (
-    C_BITWIDTH : integer range 1 to 16 := 8;
+    C_BITWIDTH : integer := 8;
 
     C_CH : integer range 1 to 512 := 4;
 
