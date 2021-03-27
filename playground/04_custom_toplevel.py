@@ -450,9 +450,9 @@ if __name__ == "__main__":
         output_channel_bitwidth,
     )
     c = Convolution(
-        "aaa",
+        "conv1",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "3"),
+            Parameter("C_KERNEL_SIZE", "integer", "3"),
             Parameter("C_STRIDE", "integer", "1"),
             Parameter("C_OUTPUT_CHANNEL", "integer", "8"),
             Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", "1"),
@@ -460,37 +460,35 @@ if __name__ == "__main__":
     )
     b.add_layer(c)
     m = MaximumPooling(
-        "ggg",
+        "max1",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "2"),
+            Parameter("C_KERNEL_SIZE", "integer", "2"),
             Parameter("C_STRIDE", "integer", "2"),
         ],
     )
     b.add_layer(m)
     c = Convolution(
-        "bbb",
+        "conv2",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "3"),
+            Parameter("C_KERNEL_SIZE", "integer", "3"),
             Parameter("C_STRIDE", "integer", "1"),
             Parameter("C_OUTPUT_CHANNEL", "integer", "16"),
             Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", "1"),
         ],
     )
     b.add_layer(c)
-    c = Convolution(
-        "ccc",
+    m = MaximumPooling(
+        "max2",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "1"),
-            Parameter("C_STRIDE", "integer", "1"),
-            Parameter("C_OUTPUT_CHANNEL", "integer", "32"),
-            Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", "1"),
+            Parameter("C_KERNEL_SIZE", "integer", "2"),
+            Parameter("C_STRIDE", "integer", "2"),
         ],
     )
-    b.add_layer(c)
+    b.add_layer(m)
     c = Convolution(
-        "ddd",
+        "conv3",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "1"),
+            Parameter("C_KERNEL_SIZE", "integer", "1"),
             Parameter("C_STRIDE", "integer", "1"),
             Parameter("C_OUTPUT_CHANNEL", "integer", "64"),
             Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", "1"),
@@ -498,9 +496,9 @@ if __name__ == "__main__":
     )
     b.add_layer(c)
     c = Convolution(
-        "eee",
+        "conv4",
         [
-            Parameter("C_KERNEL_SIZE", "integer range 1 to 7", "1"),
+            Parameter("C_KERNEL_SIZE", "integer", "1"),
             Parameter("C_STRIDE", "integer", "1"),
             Parameter("C_OUTPUT_CHANNEL", "integer", output_channel),
             Parameter("C_OUTPUT_CHANNEL_BITWIDTH", "integer", output_channel_bitwidth),
