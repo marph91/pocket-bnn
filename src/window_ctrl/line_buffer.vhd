@@ -91,9 +91,9 @@ begin
 
     if (rising_edge(isl_clk)) then
       if (isl_valid = '1') then
-        a_data_out(0)   <= islv_data;
-        for i in 1 to C_KERNEL_SIZE - 1 loop
-          a_data_out(i) <= slv_bram_data_out(i * C_BITWIDTH - 1 downto (i - 1) * C_BITWIDTH);
+        a_data_out(0)       <= islv_data;
+        for i in 0 to C_KERNEL_SIZE - 2 loop
+          a_data_out(i + 1) <= get_slice(slv_bram_data_out, i, C_BITWIDTH);
         end loop;
       end if;
 

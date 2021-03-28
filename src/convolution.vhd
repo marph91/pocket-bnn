@@ -71,7 +71,7 @@ begin
                 v_usig_popcount := v_usig_popcount + 1;
               end if;
             end loop;
-            slv_popcount((slice + 1) * C_INPUT_BITWIDTH_ADDER - 1 downto slice * C_INPUT_BITWIDTH_ADDER) <= std_logic_vector(v_usig_popcount);
+            assign_slice(slv_popcount, slice, std_logic_vector(v_usig_popcount));
           end loop;
 
           sl_add <= '1';
@@ -130,10 +130,10 @@ begin
                 else
                   v_slv_output_datum := std_logic_vector(-signed(v_slv_input_datum));
                 end if;
-                slv_product((v_int_index + 1) * C_PRODUCT_BITWIDTH - 1 downto v_int_index * C_PRODUCT_BITWIDTH) <= v_slv_output_datum;
+                assign_slice(slv_product, v_int_index, v_slv_output_datum);
               end loop;
             end loop;
-            sl_add                                                                                              <= '1';
+            sl_add <= '1';
           end if;
         end if;
 

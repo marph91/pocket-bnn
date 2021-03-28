@@ -22,9 +22,11 @@ package array_pkg is
 
   function array_to_slv (array_in : t_kernel_array) return std_logic_vector;
 
-  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector;
+  function get_slice (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector;
 
   function get_fastest_increment (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector;
+
+  procedure assign_slice (signal vector : inout std_logic_vector; int_index : in natural; value : in std_logic_vector);
 
 end package array_pkg;
 
@@ -46,6 +48,7 @@ package body array_pkg is
     for current_row in array_in(0)'RANGE(2) loop
       for current_col in array_in(0)'RANGE(1) loop
         for current_channel in array_in'RANGE loop
+          -- TODO: How to support assign_slice for variable vector? Overloading is not possible.
           out_index_high := (current_channel + current_col * channel + current_row * cols * channel + 1) * bitwidth - 1;
           out_index_low := (current_channel + current_col * channel + current_row * cols * channel) * bitwidth;
           slv_out(out_index_high downto out_index_low) := array_in(current_channel)(current_col, current_row);
@@ -55,9 +58,9 @@ package body array_pkg is
     return slv_out;
   end function;
 
-  function get_slice (vector: std_logic_vector; int_byte_index : natural; int_slice_size : natural) return std_logic_vector is
+  function get_slice (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector is
   begin
-    return vector((int_byte_index + 1) * int_slice_size - 1 downto int_byte_index * int_slice_size);
+    return vector((int_index + 1) * int_slice_size - 1 downto int_index * int_slice_size);
   end function;
 
   function get_fastest_increment (vector: std_logic_vector; int_index : natural; int_slice_size : natural) return std_logic_vector is
@@ -68,5 +71,12 @@ package body array_pkg is
     end loop;
     return vector_out;
   end function;
+
+  procedure assign_slice (signal vector : inout std_logic_vector; int_index : in natural; value : in std_logic_vector) is
+    variable v_int_slice_size : integer;
+  begin
+    v_int_slice_size := value'length;
+    vector((int_index + 1) * v_int_slice_size - 1 downto int_index * v_int_slice_size) <= value;
+  end procedure;
 
 end package body array_pkg;
