@@ -25,7 +25,7 @@ entity line_buffer is
   );
 end entity line_buffer;
 
-architecture behavioral of line_buffer is
+architecture bram of line_buffer is
 
   constant C_BRAM_SIZE       : integer := C_IMG_WIDTH * C_CH - 1;
   constant C_BRAM_DATA_WIDTH : integer := (C_KERNEL_SIZE - 1) * C_BITWIDTH;
@@ -105,4 +105,46 @@ begin
   osl_valid <= sl_valid_out;
   oa_data   <= a_data_out;
 
-end architecture behavioral;
+end architecture bram;
+
+architecture shift_register of line_buffer is
+
+  signal sl_valid_out : std_logic := '0';
+  signal a_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => '0'));
+
+  type t_buffer_array is array (natural range <>) of std_logic_vector(islv_data'range);
+  signal a_buffer : t_buffer_array(0 to (C_KERNEL_SIZE - 1) * C_IMG_WIDTH * C_CH - 1);
+
+begin
+
+  proc_input_assign : process (isl_clk) is
+  begin
+
+    if (rising_edge(isl_clk)) then
+      if (isl_valid = '1') then
+        a_buffer <= islv_data & a_buffer(0 to a_buffer'high - 1);
+      end if;
+    end if;
+
+  end process proc_input_assign;
+
+  proc_output_assign : process (isl_clk) is
+  begin
+
+    if (rising_edge(isl_clk)) then
+      if (isl_valid = '1') then
+        a_data_out(0)       <= islv_data;
+        for i in 1 to C_KERNEL_SIZE - 1 loop
+          a_data_out(i) <= a_buffer(i * C_IMG_WIDTH * C_CH - 1);
+        end loop;
+      end if;
+
+      sl_valid_out <= isl_valid;
+    end if;
+
+  end process proc_output_assign;
+
+  osl_valid <= sl_valid_out;
+  oa_data   <= a_data_out;
+
+end architecture shift_register;
