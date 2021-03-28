@@ -78,7 +78,7 @@ begin
   else generate
     -- line buffer
     -- one cycle delay
-    i_line_buffer : entity window_ctrl_lib.line_buffer(bram)
+    i_line_buffer : entity window_ctrl_lib.line_buffer(ram)
       generic map (
         C_BITWIDTH    => C_BITWIDTH,
         C_CH          => C_CH_IN,

@@ -25,7 +25,9 @@ entity line_buffer is
   );
 end entity line_buffer;
 
-architecture bram of line_buffer is
+architecture ram of line_buffer is
+
+  -- Save the image rows in lutram or blockram.
 
   constant C_BRAM_SIZE       : integer := C_IMG_WIDTH * C_CH - 1;
   constant C_BRAM_DATA_WIDTH : integer := (C_KERNEL_SIZE - 1) * C_BITWIDTH;
@@ -63,10 +65,11 @@ begin
 
   -- move data one line "down"
 
-  gen_bram_lb_connect : for i in 0 to (C_KERNEL_SIZE - 3) generate
+  gen_bram_input : for i in 0 to (C_KERNEL_SIZE - 3) generate
+    -- TODO: Use assign_slice and get_slice.
     slv_bram_data_in((C_BITWIDTH - 1) + (i + 1) * C_BITWIDTH downto (i + 1) * C_BITWIDTH)
  <= slv_bram_data_out((C_BITWIDTH - 1) + i * C_BITWIDTH downto i * C_BITWIDTH);
-  end generate gen_bram_lb_connect;
+  end generate gen_bram_input;
 
   proc_counter : process (isl_clk) is
   begin
@@ -105,14 +108,17 @@ begin
   osl_valid <= sl_valid_out;
   oa_data   <= a_data_out;
 
-end architecture bram;
+end architecture ram;
 
 architecture shift_register of line_buffer is
+
+  -- Save the image rows in lutram or blockram.
 
   signal sl_valid_out : std_logic := '0';
   signal a_data_out   : t_slv_array_1d(0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => '0'));
 
   type t_buffer_array is array (natural range <>) of std_logic_vector(islv_data'range);
+
   signal a_buffer : t_buffer_array(0 to (C_KERNEL_SIZE - 1) * C_IMG_WIDTH * C_CH - 1);
 
 begin
@@ -133,7 +139,7 @@ begin
 
     if (rising_edge(isl_clk)) then
       if (isl_valid = '1') then
-        a_data_out(0)       <= islv_data;
+        a_data_out(0)   <= islv_data;
         for i in 1 to C_KERNEL_SIZE - 1 loop
           a_data_out(i) <= a_buffer(i * C_IMG_WIDTH * C_CH - 1);
         end loop;
