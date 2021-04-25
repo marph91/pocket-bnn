@@ -3,6 +3,18 @@ import math
 from random import randint
 from typing import Dict, List, Optional
 
+from bitstring import Bits
+import numpy as np
+
+# TODO: copied from test_utils.general
+def to_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
+    """Convert signed int to fixed int."""
+    if is_unsigned:
+        number_dict = {"uint": number, "length": bitwidth}
+    else:
+        number_dict = {"int": number, "length": bitwidth}
+    return int(Bits(**number_dict).bin, 2)
+
 
 @dataclass
 class Parameter:
@@ -19,6 +31,7 @@ class Layer:
             for par in parameter
         }
         self.signals = []
+        self.previous_layer_info = None
 
     def get_constants(self) -> List[Parameter]:
         return list(self.constants.values())
@@ -37,11 +50,14 @@ class Layer:
 
 
 class Convolution(Layer):
-    def __init__(self, name, parameter):
+    def __init__(self, name, input_channel, input_channel_bitwidth, parameter):
         super().__init__(name, parameter)
 
         self.control_signal = Parameter(f"sl_valid_{self.info['name']}", "std_logic")
         self.signals = [self.control_signal]
+
+        self.input_channel = input_channel
+        self.input_channel_bitwidth = input_channel_bitwidth
 
     def update(self, previous_layer_info):
         self.previous_name = previous_layer_info["name"]
@@ -66,33 +82,6 @@ class Convolution(Layer):
             previous_layer_info["bitwidth"],
         )
 
-        # TODO: Weights and threshold as parameter and sanity check.
-        # weights
-        kernel_size = int(self.constants["C_KERNEL_SIZE"].value)
-        input_channel = previous_layer_info["channel"]
-        output_channel = self.info["channel"]
-        bitwidth = input_channel * output_channel * kernel_size ** 2
-        weights = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
-        self.constants["C_WEIGHTS"] = Parameter(
-            f"C_WEIGHTS_{self.info['name'].upper()}",
-            f"std_logic_vector({bitwidth} - 1 downto 0)",
-            f'"{weights}"',
-        )
-
-        # thresholds
-        input_channel_bitwidth = previous_layer_info["bitwidth"]
-        bitwidth = output_channel * (
-            input_channel_bitwidth
-            + math.ceil(math.log2(input_channel * kernel_size ** 2 + 1))
-            + 1
-        )
-        thresholds = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
-        self.constants["C_THRESHOLDS"] = Parameter(
-            f"C_THRESHOLDS_{self.info['name'].upper()}",
-            f"std_logic_vector({bitwidth} - 1 downto 0)",
-            f'"{thresholds}"',
-        )
-
         # calculate new image size
         self.constants["C_IMG_WIDTH"] = Parameter(
             f"C_IMG_WIDTH_{self.info['name'].upper()}",
@@ -114,6 +103,60 @@ class Convolution(Layer):
             previous_layer_info["height"],
             int(self.constants["C_KERNEL_SIZE"].value),
             int(self.constants["C_STRIDE"].value),
+        )
+
+    def add_weights(self, weights=None):
+        kernel_size = int(self.constants["C_KERNEL_SIZE"].value)
+        output_channel = int(self.constants["C_OUTPUT_CHANNEL"].value)
+        bitwidth = output_channel * self.input_channel * kernel_size ** 2
+
+        if weights is None:
+            slv_weights = "".join([str(randint(0, 1)) for _ in range(bitwidth)])
+        else:
+            # TODO: sanity checks
+            # https://docs.larq.dev/larq/api/quantizers/#stesign
+            # TODO: Weights are somehow reversed. Check why.
+            slv_weights = "".join(["0" if t < 0 else "1" for t in weights])
+
+        self.constants["C_WEIGHTS"] = Parameter(
+            f"C_WEIGHTS_{self.info['name'].upper()}",
+            f"std_logic_vector({bitwidth} - 1 downto 0)",
+            f'"{slv_weights}"',
+        )
+
+    def add_thresholds(self, thresholds=None):
+        kernel_size = int(self.constants["C_KERNEL_SIZE"].value)
+        output_channel = int(self.constants["C_OUTPUT_CHANNEL"].value)
+        threshold_bitwidth = (
+            self.input_channel_bitwidth
+            + math.ceil(math.log2(self.input_channel * kernel_size ** 2 + 1))
+            + 1
+        )
+        total_bitwidth = output_channel * threshold_bitwidth
+        if thresholds is None:
+            # TODO: Random option for signed?
+            slv_thresholds = "".join(
+                [str(randint(0, 1)) for _ in range(total_bitwidth)]
+            )
+        else:
+            # TODO: sanity checks
+            slv_thresholds_list = []
+            for t in thresholds:
+                t_fixedint = to_fixedint(
+                    int(t),
+                    threshold_bitwidth,
+                    is_unsigned=self.input_channel_bitwidth == 1,
+                )
+                slv_thresholds_list.append(
+                    bin(t_fixedint)[2:].zfill(threshold_bitwidth)
+                )
+            # TODO: Thresholds are somehow reversed. Check why.
+            slv_thresholds = "".join(slv_thresholds_list)
+            assert all([bit in ["0", "1"] for bit in slv_thresholds]), slv_thresholds
+        self.constants["C_THRESHOLDS"] = Parameter(
+            f"C_THRESHOLDS_{self.info['name'].upper()}",
+            f"std_logic_vector({total_bitwidth} - 1 downto 0)",
+            f'"{slv_thresholds}"',
         )
 
     def get_instance(self):
@@ -368,14 +411,16 @@ entity bnn is
     C_INPUT_HEIGHT : integer := {self.previous_layer_info["height"]};
     C_INPUT_WIDTH : integer := {self.previous_layer_info["width"]};
     C_INPUT_CHANNEL : integer := {self.previous_layer_info["channel"]};
-    C_INPUT_CHANNEL_BITWIDTH : integer := {self.previous_layer_info["bitwidth"]}
+    C_INPUT_CHANNEL_BITWIDTH : integer := {self.previous_layer_info["bitwidth"]};
+    C_OUTPUT_CHANNEL : integer := {self.output_classes};
+    C_OUTPUT_CHANNEL_BITWIDTH : integer := {self.output_bitwidth}
   );
   port (
     isl_clk    : in    std_logic;
     isl_start  : in    std_logic;
     isl_valid  : in    std_logic;
     islv_data  : in    std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
-    oslv_data  : out   std_logic_vector({self.output_bitwidth} - 1 downto 0);
+    oslv_data  : out   std_logic_vector(C_OUTPUT_CHANNEL_BITWIDTH - 1 downto 0);
     osl_valid  : out   std_logic;
     osl_finish : out   std_logic
   );
@@ -384,6 +429,9 @@ end entity bnn;
 
     def add_layer(self, layer):
         self.layers.append(layer)
+
+    def replace_last_layer(self, layer):
+        self.layers[-1] = layer
 
     def to_vhdl(self):
         output = []
@@ -402,10 +450,6 @@ end entity bnn;
         implementation.append(f"{self.input_control_signal.name} <= isl_valid;")
         implementation.append(f"{self.input_data_signal.name} <= islv_data;")
 
-        # append the output serializer
-        # self.layers.append(Serializer("output", []))
-        self.layers.append(AveragePooling("output", []))
-
         # parse the bnn
         for layer in self.layers:
             layer.update(self.previous_layer_info)
@@ -418,7 +462,10 @@ end entity bnn;
             implementation.append(layer.get_instance())
 
         # connect output signals
-        assert self.output_classes == self.previous_layer_info["channel"]
+        if self.output_classes != self.previous_layer_info["channel"]:
+            raise Exception(
+                f"Output classes ({self.output_classes}) don't match channel of the last layer ({self.previous_layer_info['channel']})."
+            )
         implementation.append("")
         implementation.append(f"osl_finish <= '0';")
         implementation.append(f"osl_valid <= {layer.control_signal.name};")
@@ -436,7 +483,7 @@ end entity bnn;
         return "\n".join(output)
 
 
-if __name__ == "__main__":
+def custom_bnn():
     input_channel = 1
     input_channel_bitwidth = 8
     output_channel = 8
@@ -505,8 +552,160 @@ if __name__ == "__main__":
         ],
     )
     b.add_layer(c)
+    return b
 
-    vhdl = b.to_vhdl()
-    print(vhdl)
+
+def get_kernel_size(kernel_shape):
+    ksize = kernel_shape[0]
+    for ksize_ in kernel_shape:
+        if ksize != ksize_:
+            raise Exception(
+                f"Only quadratic kernels are supported. Got kernel shape {kernel_shape}"
+            )
+    return ksize
+
+
+def get_stride(strides):
+    stride = strides[0]
+    for stride_ in strides:
+        if stride != stride_:
+            raise Exception(
+                f"Only same stride in each direction is supported. Got strides {strides}"
+            )
+    return stride
+
+
+def bnn_from_larq(path: str) -> Bnn:
+    import larq as lq
+    import tensorflow as tf
+
+    model = tf.keras.models.load_model(path)
+    lq.models.summary(model)
+
+    input_channel = 1
+    input_channel_bitwidth = 8
+    output_channel = 8
+    output_channel_bitwidth = 8
+    bnn = Bnn(
+        *model.input.shape[1:],  # h x w x ch
+        input_channel_bitwidth,
+        *model.output.shape[1:],  # ch
+        output_channel_bitwidth,
+    )
+
+    # Find last convolution layer for disabling batch normalization
+    last_conv_layer_name = None
+    for layer in model.layers:
+        if isinstance(layer, lq.layers.QuantConv2D):
+            last_conv_layer_name = layer.get_config()["name"]
+
+    last_layer = None  # Only used for sanity checks.
+    fan_in = None
+    channel = input_channel
+    channel_bw = input_channel_bitwidth
+
+    for layer in model.layers:
+        # Compare "filters" with layer.output.shape[-1]?
+        parameter = layer.get_config()
+        if isinstance(layer, lq.layers.QuantConv2D):
+            print("conv")
+
+            if parameter["name"] == last_conv_layer_name:
+                channel_bw_out = (
+                    output_channel_bitwidth  # dont append batchnorm at last layer
+                )
+            else:
+                channel_bw_out = 1
+
+            l = Convolution(
+                parameter["name"],
+                channel,
+                channel_bw,
+                [
+                    Parameter(
+                        "C_KERNEL_SIZE",
+                        "integer",
+                        get_kernel_size(parameter["kernel_size"]),
+                    ),
+                    Parameter("C_STRIDE", "integer", get_stride(parameter["strides"])),
+                    Parameter("C_OUTPUT_CHANNEL", "integer", layer.output.shape[-1]),
+                    Parameter(
+                        "C_OUTPUT_CHANNEL_BITWIDTH",
+                        "integer",
+                        str(channel_bw_out)
+                        if parameter["name"] == last_conv_layer_name
+                        else "1",
+                    ),
+                ],
+            )
+
+            l.add_weights(layer.get_weights()[0].flat)
+            l.add_thresholds()  # add dummy threshold for now -> gets overwritten if there is a batch norm layer
+            bnn.add_layer(l)
+
+            # used at the next batch norm
+            fan_in = (
+                get_kernel_size(parameter["kernel_size"]) ** 2
+                * parameter["filters"]
+                * channel_bw
+            )
+            # used at the next conv
+            channel = layer.output.shape[-1]
+            channel_bw = channel_bw_out
+        elif isinstance(layer, tf.keras.layers.BatchNormalization):
+            print("batchnorm")
+            if not isinstance(last_layer, lq.layers.QuantConv2D):
+                raise Exception(
+                    f"Batchnorm must follow convolution, not {type(last_layer)}"
+                )
+            # TODO: Check for last layer output bitwith == 1
+            if l.info["name"] == last_conv_layer_name or channel_bw != 1:
+                raise Exception()
+
+            # calculate batch normalization threshold
+            beta, mean, variance = layer.get_weights()
+            threshold_batchnorm = mean - beta * np.sqrt(variance + 0.001)
+
+            if l.input_channel_bitwidth == 1:  # unsigned
+                threshold_pos = (threshold_batchnorm + fan_in) / 2
+                l.add_thresholds(threshold_pos.tolist())
+            else:  # signed
+                l.add_thresholds(threshold_batchnorm.tolist())
+
+            bnn.replace_last_layer(l)
+        elif isinstance(layer, tf.keras.layers.MaxPooling2D):
+            print("maxpooling")
+            l = MaximumPooling(
+                parameter["name"],
+                [
+                    Parameter(
+                        "C_KERNEL_SIZE",
+                        "integer",
+                        get_kernel_size(parameter["pool_size"]),
+                    ),
+                    Parameter("C_STRIDE", "integer", get_stride(parameter["strides"])),
+                ],
+            )
+            bnn.add_layer(l)
+        elif isinstance(layer, tf.keras.layers.GlobalAveragePooling2D):
+            print("average pooling")
+            l = AveragePooling(parameter["name"], [])
+            bnn.add_layer(l)
+        elif isinstance(layer, tf.keras.layers.Flatten):
+            print("flatten")  # ignore
+        elif isinstance(layer, tf.keras.layers.Dense):
+            print("dense")
+        elif isinstance(layer, tf.keras.layers.Activation):
+            print("activation")  # ignore
+        else:
+            raise Exception(f"Unsupported layer: {type(layer)}")
+        last_layer = layer
+    return bnn
+
+
+if __name__ == "__main__":
+    # bnn = custom_bnn()
+    bnn = bnn_from_larq("../models/test")
+    vhdl = bnn.to_vhdl()
     with open("../src/bnn.vhd", "w") as outfile:
         outfile.write(vhdl)
