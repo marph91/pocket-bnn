@@ -4,7 +4,6 @@ import pathlib
 from random import randint
 from typing import List
 
-from bitstring import Bits
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import Timer

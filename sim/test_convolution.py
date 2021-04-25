@@ -66,7 +66,7 @@ async def run_test(dut):
         Testcase([1] * input_length, [0] * input_length),
         Testcase([1] * input_length, [1] * input_length),
         Testcase(
-            [randint(0, 1) for _ in range(input_length)],
+            [randint(0, 2 ** input_channel_bitwidth - 1) for _ in range(input_length)],
             [randint(0, 1) for _ in range(input_length)],
         ),
     )
