@@ -49,6 +49,16 @@ architecture behavioral of window_convolution_activation is
   constant C_POST_CONVOLUTION_BITWIDTH : integer := C_INPUT_CHANNEL_BITWIDTH + log2(C_KERNEL_SIZE ** 2 * C_INPUT_CHANNEL + 1) + 1;
   signal   a_data_convolution          : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_POST_CONVOLUTION_BITWIDTH - 1 downto 0);
 
+  function is_batch_normalization_unsigned return integer is
+  begin
+
+    if (C_INPUT_CHANNEL_BITWIDTH = 1) then
+      return 1;
+    end if;
+
+    return 0;
+  end function is_batch_normalization_unsigned;
+
   signal slv_valid_batch_normalization : std_logic_vector(C_OUTPUT_CHANNEL - 1 downto 0);
   signal slv_data_batch_normalization  : std_logic_vector(C_OUTPUT_CHANNEL * C_OUTPUT_CHANNEL_BITWIDTH - 1 downto 0);
   signal a_data_batch_normalization    : t_slv_array_1d(0 to C_OUTPUT_CHANNEL - 1)(C_OUTPUT_CHANNEL_BITWIDTH - 1 downto 0);
@@ -106,7 +116,8 @@ begin
 
       i_batch_normalization : entity cnn_lib.batch_normalization
         generic map (
-          C_POST_CONVOLUTION_BITWIDTH => C_POST_CONVOLUTION_BITWIDTH
+          C_POST_CONVOLUTION_BITWIDTH => C_POST_CONVOLUTION_BITWIDTH,
+          C_UNSIGNED                  => is_batch_normalization_unsigned
         )
         port map (
           isl_clk        => isl_clk,

@@ -8,7 +8,8 @@ library ieee;
 
 entity batch_normalization is
   generic (
-    C_POST_CONVOLUTION_BITWIDTH : integer := 8
+    C_POST_CONVOLUTION_BITWIDTH : integer              := 8;
+    C_UNSIGNED                  : integer range 0 to 1 := 1
   );
   port (
     isl_clk        : in    std_logic;
@@ -27,23 +28,47 @@ architecture behavioral of batch_normalization is
 
 begin
 
-  proc_batch_normalization : process (isl_clk) is
-  begin
+  gen_batch_normalization : if C_UNSIGNED = 1 generate
 
-    if (rising_edge(isl_clk)) then
-      sl_valid_out    <= '0';
-      slv_data_out(0) <= '0';
+    proc_batch_normalization : process (isl_clk) is
+    begin
 
-      if (isl_valid = '1') then
-        if (unsigned(islv_data) > unsigned(islv_threshold)) then
-          slv_data_out(0) <= '1';
+      if (rising_edge(isl_clk)) then
+        sl_valid_out    <= '0';
+        slv_data_out(0) <= '0';
+
+        if (isl_valid = '1') then
+          if (unsigned(islv_data) > unsigned(islv_threshold)) then
+            slv_data_out(0) <= '1';
+          end if;
+
+          sl_valid_out <= '1';
         end if;
-
-        sl_valid_out <= '1';
       end if;
-    end if;
 
-  end process proc_batch_normalization;
+    end process proc_batch_normalization;
+
+  else generate
+
+    proc_batch_normalization : process (isl_clk) is
+    begin
+
+      if (rising_edge(isl_clk)) then
+        sl_valid_out    <= '0';
+        slv_data_out(0) <= '0';
+
+        if (isl_valid = '1') then
+          if (signed(islv_data) > signed(islv_threshold)) then
+            slv_data_out(0) <= '1';
+          end if;
+
+          sl_valid_out <= '1';
+        end if;
+      end if;
+
+    end process proc_batch_normalization;
+
+  end generate gen_batch_normalization;
 
   oslv_data <= slv_data_out;
   osl_valid <= sl_valid_out;
