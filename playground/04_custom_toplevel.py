@@ -646,7 +646,7 @@ def bnn_from_larq(path: str) -> Bnn:
             # used at the next batch norm
             fan_in = (
                 get_kernel_size(parameter["kernel_size"]) ** 2
-                * parameter["filters"]
+                * channel
                 * channel_bw
             )
             # used at the next conv
