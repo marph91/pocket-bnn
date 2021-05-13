@@ -278,6 +278,6 @@ def test_window_convolution_activation(
         ),
         toplevel="window_convolution_activation",
         module="test_window_convolution_activation",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

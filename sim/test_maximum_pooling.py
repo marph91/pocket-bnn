@@ -74,6 +74,6 @@ def test_maximum_pooling(kernel_size, channel):
         ),
         toplevel="maximum_pooling",
         module="test_maximum_pooling",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

@@ -128,6 +128,6 @@ def test_window_maximum_pooling(kernel_size, stride, channel):
         ),
         toplevel="window_maximum_pooling",
         module="test_window_maximum_pooling",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

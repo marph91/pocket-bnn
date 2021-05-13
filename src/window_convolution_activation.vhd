@@ -3,7 +3,7 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
 
-library cnn_lib;
+library bnn_lib;
 
 library util;
   use util.array_pkg.all;
@@ -94,7 +94,7 @@ begin
 
   gen_convolution : for output_channel in 0 to C_OUTPUT_CHANNEL - 1 generate
 
-    i_convolution : entity cnn_lib.convolution
+    i_convolution : entity bnn_lib.convolution
       generic map (
         C_KERNEL_SIZE            => C_KERNEL_SIZE,
         C_INPUT_CHANNEL          => C_INPUT_CHANNEL,
@@ -114,7 +114,7 @@ begin
 
     gen_batch_normalization : if C_OUTPUT_CHANNEL_BITWIDTH = 1 generate
 
-      i_batch_normalization : entity cnn_lib.batch_normalization
+      i_batch_normalization : entity bnn_lib.batch_normalization
         generic map (
           C_POST_CONVOLUTION_BITWIDTH => C_POST_CONVOLUTION_BITWIDTH,
           C_UNSIGNED                  => is_batch_normalization_unsigned

@@ -34,18 +34,29 @@ SOURCES_BNN = \
 
 GHDL_FLAGS = --std=08
 
-syn: toplevel
-	export PYTHONHOME=/home/martin/anaconda3 && \
-	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/martin/anaconda3/lib && \
+bnn.json: toplevel
 	mkdir -p build/syn && \
 	cd build/syn && \
 	ghdl -a $(GHDL_FLAGS) --work=util $(SOURCES_UTIL) && \
 	ghdl -a $(GHDL_FLAGS) --work=window_ctrl_lib $(SOURCES_WINDOW_CTRL) && \
-	ghdl -a $(GHDL_FLAGS) --work=cnn_lib $(SOURCES_BNN) && \
-	ghdl --synth $(GHDL_FLAGS) --work=cnn_lib bnn && \
-	yosys -m ghdl -p 'ghdl $(GHDL_FLAGS) --work=cnn_lib --no-formal bnn; synth_ecp5 -abc9 -json bnn.json' && \
-	nextpnr-ecp5 --85k --package CABGA381 --json bnn.json
-.PHONY: syn
+	ghdl -a $(GHDL_FLAGS) --work=bnn_lib $(SOURCES_BNN) && \
+	ghdl --synth $(GHDL_FLAGS) --work=bnn_lib bnn_uart && \
+	yosys -m ghdl -p 'ghdl $(GHDL_FLAGS) --work=bnn_lib --no-formal bnn_uart; synth_ecp5 -abc9 -json bnn.json'
+	
+ulx3s_out.config: bnn.json
+	cd build/syn && \
+	export PYTHONHOME=/home/martin/anaconda3 && \
+	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/martin/anaconda3/lib && \
+	nextpnr-ecp5 --85k --package CABGA381 --json bnn.json --lpf ../../syn/ulx3s_v20.lpf --textcfg ulx3s_out.config
+
+ulx3s.bit: ulx3s_out.config
+	cd build/syn && \
+	export PYTHONHOME=/home/martin/anaconda3 && \
+	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/martin/anaconda3/lib && \
+	ecppack ulx3s_out.config ulx3s.bit
+
+prog:
+	fujprog build/syn/ulx3s.bit
 
 clean:
 	rm -rf sim/sim_build

@@ -81,6 +81,6 @@ def test_bnn():
         ),
         toplevel="bnn",
         module="test_bnn",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

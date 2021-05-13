@@ -3,7 +3,7 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
 
-library cnn_lib;
+library bnn_lib;
 
 library window_ctrl_lib;
 
@@ -63,7 +63,7 @@ begin
         osl_rdy   => open
       );
 
-    i_maximum_pooling : entity cnn_lib.maximum_pooling
+    i_maximum_pooling : entity bnn_lib.maximum_pooling
       generic map (
         C_KERNEL_SIZE => C_KERNEL_SIZE,
         C_CHANNEL     => C_CHANNEL

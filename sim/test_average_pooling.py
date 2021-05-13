@@ -118,6 +118,6 @@ def test_average_pooling():
         ),
         toplevel="average_pooling",
         module="test_average_pooling",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

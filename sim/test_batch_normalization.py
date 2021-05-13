@@ -56,6 +56,6 @@ def test_batch_normalization():
         ),
         toplevel="batch_normalization",
         module="test_batch_normalization",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )

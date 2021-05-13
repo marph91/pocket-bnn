@@ -161,7 +161,7 @@ class Convolution(Layer):
 
     def get_instance(self):
         return f"""
-i_convolution_{self.info["name"]} : entity cnn_lib.window_convolution_activation
+i_convolution_{self.info["name"]} : entity bnn_lib.window_convolution_activation
   generic map (
     C_KERNEL_SIZE => {self.constants["C_KERNEL_SIZE"].name},
     C_STRIDE      => {self.constants["C_STRIDE"].name},
@@ -229,7 +229,7 @@ class MaximumPooling(Layer):
 
     def get_instance(self):
         return f"""
-i_maximum_pooling_{self.info["name"]} : entity cnn_lib.window_maximum_pooling
+i_maximum_pooling_{self.info["name"]} : entity bnn_lib.window_maximum_pooling
   generic map (
     C_KERNEL_SIZE => {self.constants["C_KERNEL_SIZE"].name},
     C_STRIDE      => {self.constants["C_STRIDE"].name},
@@ -331,7 +331,7 @@ class AveragePooling(Layer):
 
     def get_instance(self):
         return f"""
-i_average_pooling_{self.info["name"]} : entity cnn_lib.average_pooling
+i_average_pooling_{self.info["name"]} : entity bnn_lib.average_pooling
   generic map (
     C_BITWIDTH   => {self.constants["C_BITWIDTH"].name},
 
@@ -401,7 +401,7 @@ class Bnn:
 library ieee;
   use ieee.std_logic_1164.all;
 
-library cnn_lib;
+library bnn_lib;
 library util;"""
 
         self.entity = f"""

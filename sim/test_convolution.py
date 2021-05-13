@@ -109,6 +109,6 @@ def test_convolution(kernel_size, input_channel, input_channel_bitwidth):
         ),
         toplevel="convolution",
         module="test_convolution",
-        compile_args=["--work=cnn_lib", "--std=08"],
+        compile_args=["--work=bnn_lib", "--std=08"],
         parameters=generics,
     )
