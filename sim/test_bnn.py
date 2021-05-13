@@ -26,6 +26,7 @@ async def run_test(dut):
     width = dut.C_INPUT_WIDTH.value.integer
     input_image = np.random.randint(0, 255, (1, height, width, 1), dtype=np.uint8)
 
+    # TODO: How to disable the custom gradient warning?
     model = tf.keras.models.load_model("../../models/test")
     lq.models.summary(model)
 
@@ -34,6 +35,7 @@ async def run_test(dut):
         inputs=model.inputs, outputs=[layer.output for layer in model.layers]
     )
     features = extractor(input_image)
+
     # class scores = (output before softmax + fan in) / 2
     class_scores_pos = np.around((features[-2].numpy() + features[-4].shape[-1]) / 2)
 
@@ -51,6 +53,7 @@ async def run_test(dut):
     clock_period = 10  # ns
     tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
+
     dut.isl_valid <= 0
     await tick.wait()
 
@@ -59,7 +62,6 @@ async def run_test(dut):
         dut.islv_data <= int(pixel)
         await tick.wait()
         dut.isl_valid <= 0
-        await tick.wait()
         await tick.wait()
 
     await tick.wait_multiple(height * width)

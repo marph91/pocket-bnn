@@ -1,7 +1,14 @@
 """Collection of common cocotb helper functions."""
 
-from cocotb.monitors import Monitor
+from cocotb_bus.monitors import Monitor
 from cocotb.triggers import RisingEdge, Timer
+
+
+def get_safe_int(signal, default: int = 0):
+    try:
+        return signal.value.integer
+    except ValueError:
+        return default
 
 
 # TODO: evaluate streambusmonitor
@@ -29,11 +36,8 @@ class ImageMonitor(Monitor):
 
         while True:
             await clock_edge
-            try:
-                valid = self.valid.value.integer
-            except ValueError:
-                valid = 0
-            if valid == 1:
+
+            if get_safe_int(self.valid) == 1:
                 vec = self.signal.value.binstr
                 output = [
                     int(vec[ch * self.bitwidth : (ch + 1) * self.bitwidth], 2)
@@ -45,13 +49,15 @@ class ImageMonitor(Monitor):
 class Tick:
     """Convenience class to avoid specifying the unit always."""
 
-    def __init__(self, clock_period=10, units="ns"):
+    def __init__(self, clock_period: int = 10, units: str = "ns"):
         self.clock_period = clock_period
         self.units = units
         self.tick = Timer(clock_period, units=units)
 
     async def wait(self):
+        """Wait a single clock tick."""
         await self.tick
 
-    async def wait_multiple(self, tick_count=1):
+    async def wait_multiple(self, tick_count: int = 1):
+        """Wait multiple clock ticks."""
         await Timer(self.clock_period * tick_count, units=self.units)

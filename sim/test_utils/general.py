@@ -6,22 +6,13 @@ from random import randint
 from typing import List, Optional, Sequence
 
 from bitstring import Bits
-import pytest
 
 
 def position_to_index(col: int, row: int, width: int, height: int) -> int:
+    """Convert a position into an index of a one dimensional stream."""
     index = row * width + col
     assert index < width * height
     return index
-
-
-def generate_random_image(
-    channel: int, width: int, height: int, bitwidth: int = 8
-) -> List[int]:
-    image = []
-    for _ in range(height * width * channel):
-        image.append(randint(0, 2 ** bitwidth - 1))
-    return image
 
 
 def index_to_position(index: int, width: int, height: int) -> tuple:
@@ -36,19 +27,13 @@ def index_to_position(index: int, width: int, height: int) -> tuple:
     return xpos, ypos
 
 
-def print_row_by_row(
-    name: str, list_: List[int], width: int, height: int, channel: int
-):
-    print(f"{name}:")
-    for row in range(height):
-        print(list_[row * width * channel : (row + 1) * width * channel])
-
-
 def get_files(path: pathlib.Path, pattern: str) -> List[str]:
+    """Obtain all files matching a pattern in a specific path."""
     return [p.resolve() for p in list(path.glob(pattern))]
 
 
 def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
+    """Concatenate multiple integers into a single integer."""
     concatenated_integer = 0
     for value in integer_list:
         if value > 2 ** bitwidth:
@@ -58,6 +43,7 @@ def concatenate_integers(integer_list: List[int], bitwidth=1) -> int:
 
 
 def concatenate_channel(image, channel, bitwidth=1):
+    """Concatenate the channels of an image."""
     return [
         concatenate_integers(
             image[pixel_index : pixel_index + channel], bitwidth=bitwidth
