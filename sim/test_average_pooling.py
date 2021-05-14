@@ -77,13 +77,13 @@ async def run_test(dut):
     dut.isl_start <= 0
     await tick.wait()
 
+    dut.isl_start <= 1
+    await tick.wait()
+    dut.isl_start <= 0
+    await tick.wait()
+
     # run the specific testcases
     for case in cases:
-        dut.isl_start <= 1
-        await tick.wait()
-        dut.isl_start <= 0
-        await tick.wait()
-
         for datum in case.input_data:
             dut.isl_valid <= 1
             dut.islv_data <= datum
