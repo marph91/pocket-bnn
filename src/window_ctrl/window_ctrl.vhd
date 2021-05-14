@@ -21,6 +21,11 @@ entity window_ctrl is
     C_IMG_WIDTH  : integer range 1 to 512 := 8; -- image width
     C_IMG_HEIGHT : integer range 1 to 512 := 8; -- image height
 
+    -- padding
+    -- TODO: not yet supported
+    C_PAD       : integer range 0 to 1   := 0; -- padding for each side
+    C_PAD_VALUE : integer range 0 to 255 := 0; -- (constant) value to pad
+
     -- kernel properties
     C_KERNEL_SIZE : integer range 1 to 7 := 3; -- kernel size (squared)
     C_STRIDE      : integer range 1 to 3 := 1; -- kernel stride
@@ -55,7 +60,7 @@ architecture behavioral of window_ctrl is
   signal a_wb_data_out   : t_slv_array_2d(0 to C_KERNEL_SIZE - 1, 0 to C_KERNEL_SIZE - 1)(C_BITWIDTH - 1 downto 0) := (others => (others => (others => '0')));
 
   -- for selector
-  signal sl_flush                 : std_logic := '0';
+  signal sl_trim                  : std_logic := '0';
   signal sl_selector_valid_in     : std_logic := '0';
   signal sl_selector_valid_out    : std_logic := '0';
   signal sl_selector_valid_out_d1 : std_logic := '0';
@@ -73,10 +78,13 @@ architecture behavioral of window_ctrl is
 begin
 
   gen_window_buffer : if C_KERNEL_SIZE = 1 generate
+
+    -- For 1x1 kernels, there is no buffering needed and no padding supported.
+    assert C_PAD = 0 severity failure;
+
     sl_selector_valid_out_d2  <= isl_valid;
     a_selector_data_out(0, 0) <= islv_data;
   else generate
-    -- line buffer
     -- one cycle delay
     i_line_buffer : entity window_ctrl_lib.line_buffer(ram)
       generic map (
@@ -93,7 +101,6 @@ begin
         osl_valid => sl_lb_valid_out
       );
 
-    -- window buffer
     -- one cycle delay
     i_window_buffer : entity window_ctrl_lib.window_buffer
       generic map (
@@ -114,13 +121,13 @@ begin
 
     -------------------------------------------------------
     -- The data is only needed if all of the following conditions are satisfied:
-    --    1. after initial buffering
+    --    1. after initial trimming/buffering
     --    2. every C_STRIDE row
     --    3. every C_STRIDE column
     --    4. when the window is not shifted at end/start of line
     -------------------------------------------------------
-    sl_flush <= '1' when int_pixel_cnt < (C_KERNEL_SIZE - 1) * C_IMG_WIDTH + C_KERNEL_SIZE - 1 else
-                '0';
+    sl_trim <= '1' when int_pixel_cnt < (C_KERNEL_SIZE - 1) * C_IMG_WIDTH + C_KERNEL_SIZE - 1 else
+               '0';
 
     proc_selector : process (isl_clk) is
     begin
@@ -131,7 +138,7 @@ begin
         sl_selector_valid_out_d2 <= sl_selector_valid_out_d1;
 
         if (isl_valid = '1' and                                           -- ??
-            sl_flush = '0' and
+            sl_trim = '0' and
             (int_row + 1 - C_KERNEL_SIZE + C_STRIDE) mod C_STRIDE = 0 and
             (int_col + 1 - C_KERNEL_SIZE + C_STRIDE) mod C_STRIDE = 0 and
             int_col + 1 > C_KERNEL_SIZE - 1) then
@@ -148,7 +155,7 @@ begin
   end generate gen_window_buffer;
 
   gen_channel_repeater : if C_CH_OUT > 1 generate
-    -- channel repeater
+
     i_channel_repeater : entity window_ctrl_lib.channel_repeater
       generic map (
         C_BITWIDTH    => C_BITWIDTH,
@@ -190,6 +197,7 @@ begin
     );
 
   -- synthesis translate off
+  -- only used for debugging
   i_pixel_counter_out : entity util.pixel_counter(single_process)
     generic map (
       C_HEIGHT  => 1,
@@ -212,7 +220,7 @@ begin
   osl_valid <= sl_repeater_valid_out;
   -- Use isl_valid, sl_lb_valid_out and sl_wb_valid_out to get three less cycles of the ready signal.
   -- Else too much data would get sent in.
-  osl_rdy <= '1' when sl_flush else
+  osl_rdy <= '1' when sl_trim else
              sl_repeater_rdy and not (isl_valid or sl_lb_valid_out or sl_wb_valid_out);
 
 end architecture behavioral;
