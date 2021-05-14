@@ -42,6 +42,20 @@ def analyze_window_ctrl_lib():
         subprocess.run(analyze_command, check=True)
 
 
+def analyze_uart_lib():
+    """Analyze the UART library."""
+    work = "uart_lib"
+    source_path = ABSOLUTE_PATH / ".." / ".." / "submodules" / "icestick-uart" / "hdl"
+    source_files = get_files(source_path, "*.vhd")
+
+    if outdated(f"{WORK_DIR}/{work}-obj08.cf", source_files):
+        os.makedirs(f"{WORK_DIR}", exist_ok=True)
+
+        analyze_command = ["ghdl", "-i", STD, f"--work={work}", f"--workdir={WORK_DIR}"]
+        analyze_command.extend(source_files)
+        subprocess.run(analyze_command, check=True)
+
+
 def outdated(output: str, dependencies: list) -> bool:
     """Check whether files are outdated with regards to a reference output."""
     if not os.path.isfile(output):

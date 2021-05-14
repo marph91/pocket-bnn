@@ -1,5 +1,9 @@
 file_list:
   - src/*.vhd
+  - src/interface/*.vhd:
+      rule:
+        port_011:  # interfaces have often different naming conventions
+          disable: true
   - src/util/*.vhd
   - src/window_ctrl/*.vhd
 rule:

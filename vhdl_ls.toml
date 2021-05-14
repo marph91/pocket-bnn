@@ -1,10 +1,16 @@
 [libraries]
+uart_lib.files = [
+  "submodules/icestick-uart/hdl/*.vhd",
+]
 util.files = [
   "src/util/*.vhd",
 ]
 window_ctrl_lib.files = [
   "src/window_ctrl/*.vhd",
 ]
-cnn_lib.files = [
+bnn_lib.files = [
   "src/*.vhd",
+]
+bnn_interface.files = [
+  "src/interface/*.vhd",
 ]

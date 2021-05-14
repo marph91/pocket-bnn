@@ -3,7 +3,11 @@ import random
 
 import numpy as np
 
-from test_utils.extra_libs import analyze_util, analyze_window_ctrl_lib
+from test_utils.extra_libs import (
+    analyze_util,
+    analyze_window_ctrl_lib,
+    analyze_uart_lib,
+)
 
 # https://stackoverflow.com/questions/44624407/how-to-reduce-log-line-size-in-cocotb
 os.environ["COCOTB_REDUCED_LOG_FMT"] = "1"
@@ -25,6 +29,7 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     analyze_util()
     analyze_window_ctrl_lib()
+    analyze_uart_lib()
 
     if config.getoption("--waves"):
         os.environ["WAVES"] = "1"
