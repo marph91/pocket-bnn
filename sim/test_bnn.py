@@ -25,6 +25,7 @@ async def run_test(dut):
     height = dut.C_INPUT_HEIGHT.value.integer
     width = dut.C_INPUT_WIDTH.value.integer
     input_image = np.random.randint(0, 255, (1, height, width, 1), dtype=np.uint8)
+    # input_image = np.full((1, height, width, 1), 0, dtype=np.uint8)
 
     # TODO: How to disable the custom gradient warning?
     model = tf.keras.models.load_model("../../models/test")
@@ -55,22 +56,28 @@ async def run_test(dut):
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
 
     dut.isl_valid <= 0
+    dut.isl_start <= 1
+    await tick.wait()
+    dut.isl_start <= 0
     await tick.wait()
 
-    for pixel in input_image.flat:
-        dut.isl_valid <= 1
-        dut.islv_data <= int(pixel)
-        await tick.wait()
-        dut.isl_valid <= 0
-        await tick.wait()
+    for _ in range(2):
+        for pixel in input_image.flat:
+            dut.isl_valid <= 1
+            dut.islv_data <= int(pixel)
+            await tick.wait()
+            dut.isl_valid <= 0
+            await tick.wait()
 
-    await tick.wait_multiple(height * width)
+        await tick.wait_multiple(height * width)
 
-    np.testing.assert_almost_equal(
-        np.resize(np.array(output_mon.output), class_scores_pos.shape),
-        class_scores_pos,
-        decimal=0,
-    )
+        np.testing.assert_almost_equal(
+            np.resize(np.array(output_mon.output), class_scores_pos.shape),
+            class_scores_pos,
+            decimal=0,
+        )
+
+        output_mon.clear()
 
 
 def test_bnn():
