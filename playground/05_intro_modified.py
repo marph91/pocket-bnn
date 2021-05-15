@@ -60,7 +60,7 @@ model.add(tf.keras.layers.Activation("softmax"))
 model.compile(
     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
 )
-model.fit(train_images, train_labels, batch_size=64, epochs=1)
+model.fit(train_images, train_labels, batch_size=64, epochs=10)
 test_loss, test_acc = model.evaluate(test_images, test_labels)
 print(f"Test accuracy {test_acc * 100:.2f} %")
 
