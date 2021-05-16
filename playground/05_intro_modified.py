@@ -50,12 +50,16 @@ model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 model.add(lq.layers.QuantConv2D(64, (1, 1), use_bias=False, **kwargs))
 model.add(tf.keras.layers.BatchNormalization(scale=False))
 # model.add(tf.keras.layers.Dropout(0.2))
-model.add(lq.layers.QuantConv2D(10, (1, 1), use_bias=False, **kwargs))
-# model.add(tf.keras.layers.Dropout(0.2))
-model.add(lq.layers.tf.keras.layers.GlobalAveragePooling2D())
-# model.add(tf.keras.layers.Flatten())
-# model.add(lq.layers.QuantDense(10, use_bias=False, **kwargs))
+if True:
+    model.add(lq.layers.QuantConv2D(10, (1, 1), use_bias=False, **kwargs))
+    model.add(lq.layers.tf.keras.layers.GlobalAveragePooling2D())
+else:
+    # fully connected layer instead of 1x1 convolution
+    model.add(tf.keras.layers.Flatten())
+    model.add(lq.layers.QuantDense(10, use_bias=False, **kwargs))
 model.add(tf.keras.layers.Activation("softmax"))
+
+lq.models.summary(model)
 
 model.compile(
     optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
@@ -64,5 +68,4 @@ model.fit(train_images, train_labels, batch_size=64, epochs=10)
 test_loss, test_acc = model.evaluate(test_images, test_labels)
 print(f"Test accuracy {test_acc * 100:.2f} %")
 
-lq.models.summary(model)
 model.save("../models/test")
