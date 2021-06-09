@@ -35,7 +35,8 @@ begin
       a_data <= a_data(1 to a_data'high) & a_data(0);
 
       if (isl_valid = '1') then
-        assert int_output_valid_cycles = 0 severity failure;
+        assert int_output_valid_cycles = 0
+          severity failure;
         int_output_valid_cycles <= C_DATA_COUNT;
         for i in a_data'range loop
           a_data(i)             <= get_slice(islv_data, i, C_DATA_BITWIDTH);

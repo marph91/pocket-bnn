@@ -106,13 +106,7 @@ async def run_test(dut):
 
 # Don't run the full test matrix. Only the most common configs.
 @pytest.mark.parametrize(
-    "kernel_size,stride,channel",
-    [
-        (2, 1, 8),
-        (2, 2, 12),
-        (3, 1, 16),
-        (3, 2, 9),
-    ],
+    "kernel_size,stride,channel", [(2, 1, 8), (2, 2, 12), (3, 1, 16), (3, 2, 9),],
 )
 def test_window_maximum_pooling(kernel_size, stride, channel):
     generics = {

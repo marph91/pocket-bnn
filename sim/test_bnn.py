@@ -42,12 +42,7 @@ async def run_test(dut):
 
     output_bitwitdh = dut.C_OUTPUT_CHANNEL_BITWIDTH.value.integer
     output_mon = ImageMonitor(
-        "output",
-        dut.oslv_data,
-        dut.osl_valid,
-        dut.isl_clk,
-        1,
-        output_bitwitdh,
+        "output", dut.oslv_data, dut.osl_valid, dut.isl_clk, 1, output_bitwitdh,
     )
 
     # initialize the test

@@ -1,9 +1,9 @@
 import tensorflow as tf
 import larq as lq
 
-(train_images, train_labels), (
-    test_images,
-    test_labels,
+(
+    (train_images, train_labels),
+    (test_images, test_labels,),
 ) = tf.keras.datasets.mnist.load_data()
 
 train_images = train_images.reshape((60000, 28, 28, 1))

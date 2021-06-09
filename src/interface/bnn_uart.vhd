@@ -112,7 +112,8 @@ begin
       case output_state is
 
         when IDLE =>
-          assert sl_valid_out_bnn = '0' severity failure;
+          assert sl_valid_out_bnn = '0'
+            severity failure;
 
           int_valid_buffer_values <= 0;
           output_state            <= FILL;
@@ -128,7 +129,8 @@ begin
           end if;
 
         when READY_TO_SEND =>
-          assert sl_valid_out_bnn = '0' severity failure;
+          assert sl_valid_out_bnn = '0'
+            severity failure;
 
           if (sl_ready_uart_tx = '1') then
             int_valid_buffer_values <= int_valid_buffer_values - 1;

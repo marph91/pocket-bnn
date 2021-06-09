@@ -61,12 +61,7 @@ async def run_test(dut):
     tick = Tick(clock_period=clock_period)
     cocotb.fork(Clock(dut.isl_clk, clock_period, units="ns").start())
     output_mon = ImageMonitor(
-        "output",
-        dut.oslv_data,
-        dut.osl_valid,
-        dut.isl_clk,
-        1,
-        output_bitwidth,
+        "output", dut.oslv_data, dut.osl_valid, dut.isl_clk, 1, output_bitwidth,
     )
     dut.isl_valid <= 0
     await tick.wait()

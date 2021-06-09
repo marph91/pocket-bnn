@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 
 num_classes = 10
 
-(train_images, train_labels), (
-    test_images,
-    test_labels,
+(
+    (train_images, train_labels),
+    (test_images, test_labels,),
 ) = tf.keras.datasets.cifar10.load_data()
 
 train_images = train_images.reshape((50000, 32, 32, 3)).astype("float32")

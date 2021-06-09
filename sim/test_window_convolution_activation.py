@@ -49,11 +49,7 @@ async def run_test(dut):
     batch_shape = (1,) + image_shape
     input_ = tf.keras.Input(batch_shape=batch_shape, name="img")
     x = lq.layers.QuantConv2D(
-        output_channel,
-        kernel_size,
-        strides=stride,
-        use_bias=False,
-        name="test_conv",
+        output_channel, kernel_size, strides=stride, use_bias=False, name="test_conv",
     )(input_)
     if output_channel_bitwidth == 1:
         # Scale is not needed, since we clip afterwards anyway.

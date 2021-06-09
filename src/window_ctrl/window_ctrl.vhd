@@ -80,7 +80,8 @@ begin
   gen_window_buffer : if C_KERNEL_SIZE = 1 generate
 
     -- For 1x1 kernels, there is no buffering needed and no padding supported.
-    assert C_PAD = 0 severity failure;
+    assert C_PAD = 0
+      severity failure;
 
     sl_selector_valid_out_d2  <= isl_valid;
     a_selector_data_out(0, 0) <= islv_data;
