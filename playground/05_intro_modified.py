@@ -33,7 +33,7 @@ model.add(
         kernel_quantizer="ste_sign",
         kernel_constraint="weight_clip",
         use_bias=False,
-        input_shape=(28, 28, 1),
+        input_shape=train_images.shape[1:],
     )
 )
 # Scale is not needed, since we clip afterwards anyway.
