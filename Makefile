@@ -20,6 +20,8 @@ SOURCES_UTIL = \
 	$(ROOT_DIR)/src/util/array_pkg.vhd \
 	$(ROOT_DIR)/src/util/math_pkg.vhd \
 	$(ROOT_DIR)/src/util/bram.vhd \
+	$(ROOT_DIR)/src/util/bram_dual_port.vhd \
+	$(ROOT_DIR)/src/util/brom.vhd \
 	$(ROOT_DIR)/src/util/basic_counter.vhd \
 	$(ROOT_DIR)/src/util/pixel_counter.vhd \
 	$(ROOT_DIR)/src/util/adder_tree.vhd \
@@ -53,14 +55,10 @@ bnn.json: toplevel
 	
 bnn_out.config: bnn.json
 	cd build/syn && \
-	export PYTHONHOME=/home/martin/anaconda3 && \
-	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/martin/anaconda3/lib && \
-	nextpnr-ecp5 --85k --package CABGA381 --json bnn.json --lpf ../../syn/ulx3s_v20.lpf --textcfg bnn_out.config
+	nextpnr-ecp5 --85k --package CABGA381 --json bnn.json --lpf ../../syn/ulx3s_v20.lpf --textcfg bnn_out.config --lpf-allow-unconstrained
 
 bnn.bit: bnn_out.config
 	cd build/syn && \
-	export PYTHONHOME=/home/martin/anaconda3 && \
-	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/martin/anaconda3/lib && \
 	ecppack bnn_out.config bnn.bit
 
 prog:

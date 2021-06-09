@@ -5,9 +5,8 @@ library ieee;
 
 entity bram is
   generic (
-    C_DATA_WIDTH : integer;
-    C_ADDR_WIDTH : integer;
-    C_SIZE       : integer
+    C_DATA_WIDTH : integer := 8;
+    C_ADDR_WIDTH : integer := 9
   );
   port (
     isl_clk   : in    std_logic;
@@ -21,11 +20,10 @@ end entity bram;
 
 architecture behavioral of bram is
 
-  type t_ram is array(0 to C_SIZE - 1) of std_logic_vector(C_DATA_WIDTH - 1 downto 0);
+  type t_ram is array(0 to 2 ** C_ADDR_WIDTH - 1) of std_logic_vector(C_DATA_WIDTH - 1 downto 0);
 
-  signal a_ram    : t_ram;
-  attribute ram_style : string;
-  attribute ram_style of a_ram : signal is "block";
+  signal a_ram : t_ram;
+
   signal slv_data : std_logic_vector(C_DATA_WIDTH - 1 downto 0);
 
 begin

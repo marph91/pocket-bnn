@@ -47,8 +47,7 @@ begin
   i_bram : entity util.bram
     generic map (
       C_DATA_WIDTH => C_BRAM_DATA_WIDTH,
-      C_ADDR_WIDTH => C_BRAM_ADDR_WIDTH,
-      C_SIZE       => C_BRAM_SIZE
+      C_ADDR_WIDTH => C_BRAM_ADDR_WIDTH
     )
     port map (
       isl_clk   => isl_clk,
