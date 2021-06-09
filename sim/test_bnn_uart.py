@@ -17,10 +17,11 @@ from test_utils.general import get_files
 async def run_test(dut):
     height = dut.i_bnn.C_INPUT_HEIGHT.value.integer
     width = dut.i_bnn.C_INPUT_WIDTH.value.integer
+    channel = dut.i_bnn.C_INPUT_CHANNEL.value.integer
     classes = dut.i_bnn.C_OUTPUT_CHANNEL.value.integer
 
-    # input_image = np.random.randint(0, 255, (1, height, width, 1), dtype=np.uint8)
-    input_image = np.full((1, height, width, 1), 0, dtype=np.uint8)
+    # input_image = np.random.randint(0, 255, (1, height, width, channel), dtype=np.uint8)
+    input_image = np.full((1, height, width, channel), 0, dtype=np.uint8)
 
     # initialize the test
     clock_period = 40  # ns

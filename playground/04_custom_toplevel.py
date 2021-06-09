@@ -4,7 +4,9 @@ from random import randint
 from typing import Dict, List, Optional
 
 from bitstring import Bits
+import larq as lq
 import numpy as np
+import tensorflow as tf
 
 # TODO: copied from test_utils.general
 def to_fixedint(number: int, bitwidth: int, is_unsigned: bool = True):
@@ -382,18 +384,18 @@ class Bnn:
         self.output_classes = output_classes
         self.output_bitwidth = output_bitwidth
         self.previous_layer_info = {
-            "name": "in",
+            "name": "in_deserialized",
             "channel": input_channel,
             "bitwidth": input_bitwidth,
             "width": image_width,
             "height": image_height,
         }
 
-        self.input_data_signal = Parameter(
+        self.input_data_signal_deserialized = Parameter(
             f"slv_data_{self.previous_layer_info['name']}",
-            f"std_logic_vector(8 - 1 downto 0)",
+            f"std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0)",
         )
-        self.input_control_signal = Parameter(
+        self.input_control_signal_deserialized = Parameter(
             f"sl_valid_{self.previous_layer_info['name']}", "std_logic"
         )
 
@@ -419,7 +421,7 @@ entity bnn is
     isl_clk    : in    std_logic;
     isl_start  : in    std_logic;
     isl_valid  : in    std_logic;
-    islv_data  : in    std_logic_vector(C_INPUT_CHANNEL * C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
+    islv_data  : in    std_logic_vector(C_INPUT_CHANNEL_BITWIDTH - 1 downto 0);
     oslv_data  : out   std_logic_vector(C_OUTPUT_CHANNEL_BITWIDTH - 1 downto 0);
     osl_valid  : out   std_logic;
     osl_finish : out   std_logic
@@ -441,14 +443,32 @@ end entity bnn;
         declarations.append("-- input signals")
         declarations.append(
             parameter_to_vhdl(
-                "signal", [self.input_data_signal, self.input_control_signal]
+                "signal",
+                [
+                    self.input_data_signal_deserialized,
+                    self.input_control_signal_deserialized,
+                ],
             )
         )
         declarations.append("")
 
         # connect input signals
-        implementation.append(f"{self.input_control_signal.name} <= isl_valid;")
-        implementation.append(f"{self.input_data_signal.name} <= islv_data;")
+        implementation.append(
+            f"""
+i_deserializer : entity util.deserializer
+  generic map (
+    C_DATA_COUNT    => C_INPUT_CHANNEL,
+    C_DATA_BITWIDTH => C_INPUT_CHANNEL_BITWIDTH
+  )
+  port map (
+    isl_clk   => isl_clk,
+    isl_valid => isl_valid,
+    islv_data => islv_data,
+    oslv_data => {self.input_data_signal_deserialized.name},
+    osl_valid => {self.input_control_signal_deserialized.name}
+  );
+"""
+        )
 
         # parse the bnn
         for layer in self.layers:
@@ -576,15 +596,11 @@ def get_stride(strides):
 
 
 def bnn_from_larq(path: str) -> Bnn:
-    import larq as lq
-    import tensorflow as tf
-
     model = tf.keras.models.load_model(path)
     lq.models.summary(model)
 
-    input_channel = 1
+    input_channel = model.input.shape[-1]
     input_channel_bitwidth = 8
-    output_channel = 8
     output_channel_bitwidth = 8
     bnn = Bnn(
         *model.input.shape[1:],  # h x w x ch

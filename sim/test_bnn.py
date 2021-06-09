@@ -24,8 +24,9 @@ np.set_printoptions(suppress=True)
 async def run_test(dut):
     height = dut.C_INPUT_HEIGHT.value.integer
     width = dut.C_INPUT_WIDTH.value.integer
-    input_image = np.random.randint(0, 255, (1, height, width, 1), dtype=np.uint8)
-    # input_image = np.full((1, height, width, 1), 0, dtype=np.uint8)
+    channel = dut.C_INPUT_CHANNEL.value.integer
+    input_image = np.random.randint(0, 255, (1, height, width, channel), dtype=np.uint8)
+    # input_image = np.full((1, height, width, channel), 0, dtype=np.uint8)
 
     # TODO: How to disable the custom gradient warning?
     model = tf.keras.models.load_model("../../models/test")

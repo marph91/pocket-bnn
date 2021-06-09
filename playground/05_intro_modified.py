@@ -2,19 +2,22 @@ import larq as lq
 import tensorflow as tf
 
 # for resizing
-import cv2
 import numpy as np
 
-(train_images, train_labels), (
-    test_images,
-    test_labels,
-) = tf.keras.datasets.mnist.load_data()
+dataset = "mnist"
+if dataset == "mnist":
+    (
+        (train_images, train_labels),
+        (test_images, test_labels,),
+    ) = tf.keras.datasets.mnist.load_data()
 
-# reshape the inputs
-# train_images = np.stack([cv2.resize(img, (22, 22)) for img in train_images])
-train_images = train_images.reshape((60000, 28, 28, 1))
-# test_images = np.stack([cv2.resize(img, (22, 22)) for img in test_images])
-test_images = test_images.reshape((10000, 28, 28, 1))
+    train_images = train_images.reshape((60000, 28, 28, 1))
+    test_images = test_images.reshape((10000, 28, 28, 1))
+else:
+    (
+        (train_images, train_labels),
+        (test_images, test_labels,),
+    ) = tf.keras.datasets.cifar10.load_data()
 
 # All quantized layers except the first will use the same options
 kwargs = dict(
@@ -50,6 +53,10 @@ model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 model.add(lq.layers.QuantConv2D(64, (1, 1), use_bias=False, **kwargs))
 model.add(tf.keras.layers.BatchNormalization(scale=False))
 # model.add(tf.keras.layers.Dropout(0.2))
+
+if dataset == "mnist":
+    model.add(lq.layers.QuantConv2D(128, (1, 1), use_bias=False, **kwargs))
+    model.add(tf.keras.layers.BatchNormalization(scale=False))
 if True:
     model.add(lq.layers.QuantConv2D(10, (1, 1), use_bias=False, **kwargs))
     model.add(lq.layers.tf.keras.layers.GlobalAveragePooling2D())
