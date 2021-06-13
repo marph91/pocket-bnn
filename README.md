@@ -29,3 +29,7 @@ A few stats for the example are:
 - Frequency: 25 MHz (Max. frequency: 132 MHz)
 
 In simulation, the full BNN inference is done in less than 10 us at 100 MHz. More stats will follow, since this is the first example.
+
+## Documentation
+
+For now, there is not much documentation. Some design decisions are documented at the [documentation folder](https://github.com/marph91/pocket-bnn/tree/master/doc). The [tests](https://github.com/marph91/pocket-bnn/tree/master/sim) might be useful, too.
