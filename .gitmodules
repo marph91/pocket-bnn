@@ -1,3 +1,9 @@
 [submodule "submodules/icestick-uart"]
 	path = submodules/icestick-uart
 	url = https://github.com/marph91/icestick-uart.git
+[submodule "submodules/sdram-fpga"]
+	path = submodules/sdram-fpga
+	url = https://github.com/marph91/sdram-fpga.git
+[submodule "submodules/ulx3s-misc"]
+	path = submodules/ulx3s-misc
+	url = https://github.com/emard/ulx3s-misc.git
