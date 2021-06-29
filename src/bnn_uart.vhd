@@ -124,16 +124,16 @@ begin
       osl_valid => sl_valid_out_uart_rx
     );
 
-  i_bnn : entity bnn_lib.bnn
-    port map (
-      isl_clk    => isl_clk,
-      isl_start  => isl_start,
-      isl_valid  => sl_valid_out_uart_rx,
-      islv_data  => slv_data_out_uart_rx,
-      oslv_data  => slv_data_out_bnn,
-      osl_valid  => sl_valid_out_bnn,
-      osl_finish => sl_finish
-    );
+  -- i_bnn : entity bnn_lib.bnn
+  --   port map (
+  --     isl_clk    => isl_clk,
+  --     isl_start  => isl_start,
+  --     isl_valid  => sl_valid_out_uart_rx,
+  --     islv_data  => slv_data_out_uart_rx,
+  --     oslv_data  => slv_data_out_bnn,
+  --     osl_valid  => sl_valid_out_bnn,
+  --     osl_finish => sl_finish
+  --   );
 
   sdram_clk <= slv_clocks(0); -- TODO: Use slv_clocks(1), which is shifted by 180 degree?
 
