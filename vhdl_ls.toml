@@ -1,6 +1,11 @@
 [libraries]
-uart_lib.files = [
+fmf.files = [
+  "submodules/fmf/*.vhd",
+]
+interface_lib.files = [
   "submodules/icestick-uart/hdl/*.vhd",
+  "submodules/sdram-fpga/sdram.vhd",
+  "submodules/ulx3s-misc/examples/ecp5pll/hdl/vhd/ecp5pll.vhd",
 ]
 util.files = [
   "src/util/*.vhd",
@@ -10,7 +15,4 @@ window_ctrl_lib.files = [
 ]
 bnn_lib.files = [
   "src/*.vhd",
-]
-bnn_interface.files = [
-  "src/interface/*.vhd",
 ]

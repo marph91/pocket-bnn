@@ -8,3 +8,5 @@ __pycache__
 notes.txt
 *.gtkw
 bnn.vhd
+
+*.pdf

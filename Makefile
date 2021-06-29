@@ -13,6 +13,9 @@ toplevel:
 	cd playground && python 04_custom_toplevel.py
 
 ROOT_DIR = $(shell pwd)
+SOURCES_THIRD_PARTY = \
+	$(ROOT_DIR)/submodules/sdram-fpga/sdram.vhd \
+	$(ROOT_DIR)/submodules/ulx3s-misc/examples/ecp5pll/hdl/vhd/ecp5pll.vhd
 SOURCES_UART = \
 	$(ROOT_DIR)/submodules/icestick-uart/hdl/uart_rx.vhd \
 	$(ROOT_DIR)/submodules/icestick-uart/hdl/uart_tx.vhd
@@ -25,7 +28,8 @@ SOURCES_UTIL = \
 	$(ROOT_DIR)/src/util/basic_counter.vhd \
 	$(ROOT_DIR)/src/util/pixel_counter.vhd \
 	$(ROOT_DIR)/src/util/adder_tree.vhd \
-	$(ROOT_DIR)/src/util/serializer.vhd
+	$(ROOT_DIR)/src/util/serializer.vhd \
+	$(ROOT_DIR)/src/util/deserializer.vhd
 SOURCES_WINDOW_CTRL = \
 	$(ROOT_DIR)/src/window_ctrl/channel_repeater.vhd \
 	$(ROOT_DIR)/src/window_ctrl/line_buffer.vhd \
@@ -39,14 +43,14 @@ SOURCES_BNN = \
 	$(ROOT_DIR)/src/maximum_pooling.vhd \
 	$(ROOT_DIR)/src/window_maximum_pooling.vhd \
 	$(ROOT_DIR)/src/bnn.vhd \
-	$(ROOT_DIR)/src/interface/bnn_uart.vhd
+	$(ROOT_DIR)/src/bnn_uart.vhd
 
-GHDL_FLAGS = --std=08
+GHDL_FLAGS = -fsynopsys --std=08
 
 bnn.json: toplevel
 	mkdir -p build/syn && \
 	cd build/syn && \
-	ghdl -a $(GHDL_FLAGS) --work=uart_lib $(SOURCES_UART) && \
+	ghdl -a $(GHDL_FLAGS) --work=interface_lib $(SOURCES_UART) $(SOURCES_THIRD_PARTY) && \
 	ghdl -a $(GHDL_FLAGS) --work=util $(SOURCES_UTIL) && \
 	ghdl -a $(GHDL_FLAGS) --work=window_ctrl_lib $(SOURCES_WINDOW_CTRL) && \
 	ghdl -a $(GHDL_FLAGS) --work=bnn_lib $(SOURCES_BNN) && \
