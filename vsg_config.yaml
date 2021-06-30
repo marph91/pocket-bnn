@@ -1,9 +1,9 @@
 file_list:
-  - src/*.vhd
-  - src/interface/*.vhd:
+  - src/bnn_uart.vhd:
       rule:
         port_011:  # interfaces have often different naming conventions
           disable: true
+  - src/*.vhd
   - src/util/*.vhd
   - src/window_ctrl/*.vhd
 rule:
