@@ -104,9 +104,6 @@ def test_convolution(kernel_size, input_channel, input_channel_bitwidth):
         "C_INPUT_CHANNEL_BITWIDTH": input_channel_bitwidth,
     }
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="convolution",
         module="test_convolution",
         compile_args=["--work=bnn_lib", "--std=08"],

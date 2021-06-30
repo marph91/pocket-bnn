@@ -51,9 +51,6 @@ async def run_test(dut):
 def test_batch_normalization():
     generics = {}
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="batch_normalization",
         module="test_batch_normalization",
         compile_args=["--work=bnn_lib", "--std=08"],

@@ -92,13 +92,6 @@ def test_adder_tree(is_unsigned, input_bitwidth):
         log2(generics["C_INPUT_COUNT"])
     )
     run(
-        vhdl_sources=[
-            pathlib.Path(__file__).parent.absolute()
-            / ".."
-            / "src"
-            / "util"
-            / "adder_tree.vhd"
-        ],
         toplevel="adder_tree",
         module="test_adder_tree",
         compile_args=["--work=util", "--std=08"],

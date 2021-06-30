@@ -269,9 +269,6 @@ def test_window_convolution_activation(
         "C_IMG_HEIGHT": 8,
     }
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="window_convolution_activation",
         module="test_window_convolution_activation",
         compile_args=["--work=bnn_lib", "--std=08"],

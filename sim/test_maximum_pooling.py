@@ -69,9 +69,6 @@ def test_maximum_pooling(kernel_size, channel):
         "C_CHANNEL": channel,
     }
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="maximum_pooling",
         module="test_maximum_pooling",
         compile_args=["--work=bnn_lib", "--std=08"],

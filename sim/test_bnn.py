@@ -79,9 +79,6 @@ async def run_test(dut):
 def test_bnn():
     generics = {}
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="bnn",
         module="test_bnn",
         compile_args=["--work=bnn_lib", "--std=08"],

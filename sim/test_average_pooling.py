@@ -113,9 +113,6 @@ def test_average_pooling():
         "C_IMG_HEIGHT": 6,
     }
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="average_pooling",
         module="test_average_pooling",
         compile_args=["--work=bnn_lib", "--std=08"],

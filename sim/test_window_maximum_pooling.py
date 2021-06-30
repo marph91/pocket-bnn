@@ -117,9 +117,6 @@ def test_window_maximum_pooling(kernel_size, stride, channel):
         "C_IMG_HEIGHT": 8,
     }
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        ),
         toplevel="window_maximum_pooling",
         module="test_window_maximum_pooling",
         compile_args=["--work=bnn_lib", "--std=08"],

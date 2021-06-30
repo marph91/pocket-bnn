@@ -60,13 +60,6 @@ async def run_test(dut):
 def test_bnn_uart():
     generics = {"C_QUARTZ_FREQ": 115200 * 4}  # 4 cycles per bit for faster simulation
     run(
-        vhdl_sources=get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src", "*.vhd"
-        )
-        + get_files(
-            pathlib.Path(__file__).parent.absolute() / ".." / "src" / "interface",
-            "*.vhd",
-        ),
         toplevel="bnn_uart",
         module="test_bnn_uart",
         compile_args=["--work=bnn_lib", "--std=08"],
