@@ -1,19 +1,13 @@
-from dataclasses import dataclass
-import pathlib
-from random import randint
 import sys
-from typing import List
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import larq as lq
 import numpy as np
 import tensorflow as tf
 
 from test_utils.cocotb_helpers import ImageMonitor, Tick
-from test_utils.general import get_files
 
 np.set_printoptions(threshold=sys.maxsize)
 # https://stackoverflow.com/questions/2891790/how-to-pretty-print-a-numpy-array-without-scientific-notation-and-with-given-pre

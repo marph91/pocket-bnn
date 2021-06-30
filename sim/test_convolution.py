@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from math import log2
-import pathlib
 from random import randint
 from typing import List
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 
@@ -14,8 +12,6 @@ from test_utils.cocotb_helpers import Tick
 from test_utils.general import (
     concatenate_integers,
     from_fixedint,
-    to_fixedint,
-    get_files,
 )
 
 

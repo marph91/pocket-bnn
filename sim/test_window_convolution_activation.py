@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 import math
-import pathlib
 import random
-from random import choice, randint
+from random import choice
 from typing import List
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 
@@ -19,7 +17,6 @@ from test_utils.cocotb_helpers import ImageMonitor, Tick
 from test_utils.general import (
     concatenate_channel,
     concatenate_integers,
-    get_files,
 )
 
 

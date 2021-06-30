@@ -1,19 +1,16 @@
 from dataclasses import dataclass
 import math
-import pathlib
-import random
 from random import randint
 from typing import List
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 import tensorflow as tf
 
 from test_utils.cocotb_helpers import ImageMonitor, Tick
-from test_utils.general import concatenate_channel, get_files
+from test_utils.general import concatenate_channel
 
 
 @cocotb.test()

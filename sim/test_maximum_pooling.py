@@ -1,16 +1,14 @@
 from dataclasses import dataclass
-import pathlib
 from random import randint
 from typing import List
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import Timer
 from cocotb_test.simulator import run
 import pytest
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import concatenate_integers, get_files
+from test_utils.general import concatenate_integers
 
 
 @cocotb.test()

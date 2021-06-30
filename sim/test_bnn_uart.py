@@ -1,8 +1,3 @@
-from dataclasses import dataclass
-import pathlib
-from random import randint
-from typing import List
-
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge
@@ -10,7 +5,6 @@ from cocotb_test.simulator import run
 import numpy as np
 
 from test_utils.cocotb_helpers import Tick
-from test_utils.general import get_files
 
 
 @cocotb.test()

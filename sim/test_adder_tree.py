@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from math import ceil, log2
-import pathlib
 from random import randint
 from typing import List
 
@@ -15,7 +14,6 @@ from test_utils.general import (
     concatenate_integers,
     from_fixedint,
     to_fixedint,
-    get_files,
 )
 
 

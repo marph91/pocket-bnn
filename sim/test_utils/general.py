@@ -1,9 +1,8 @@
 """Collection of general test utilities."""
 
-import dataclasses
 import pathlib
 from random import randint
-from typing import List, Optional, Sequence
+from typing import List
 
 from bitstring import Bits
 
