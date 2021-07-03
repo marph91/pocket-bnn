@@ -2,23 +2,12 @@ import unittest
 
 from nmigen.sim import Simulator
 
+import sim.common as cm
 from src.maximum_pooling import MaximumPooling
 
 
 class Tests(unittest.TestCase):
     # https://github.com/nmigen/nmigen/blob/b38b2cdad74c85c026a9313f8882f52460eb82e6/tests/test_sim.py
-
-    def assign_array(self, input_array, signal):
-        for ch in range(len(signal)):
-            for w in range(len(signal[0])):
-                for h in range(len(signal[0][0])):
-                    yield signal[ch][w][h].eq(input_array[ch][w][h])
-
-    def yield_array(self, array):
-        result = []
-        for index in range(len(array)):
-            result.append((yield array[index]))
-        return result
 
     def test_maximum_pooling(self):
         dut = MaximumPooling(3)
@@ -31,23 +20,23 @@ class Tests(unittest.TestCase):
         def stimuli():
             # arbitrary input for one cycle
             input_array = [
-                [[1, 0], [0, 0]],
-                [[0, 0], [0, 0]],
-                [[1, 0], [0, 0]],
+                [1, 0, 0, 0],
+                [0, 0, 0, 0],
+                [1, 0, 0, 0],
             ]
             data_in.append(input_array)
-            yield from self.assign_array(input_array, dut.data_in)
+            yield from cm.assign_array_2d(input_array, dut.data_in)
             yield dut.valid_in.eq(1)
             yield
 
             # new input, but not valid
             input_array = [
-                [[0, 0], [0, 0]],
-                [[0, 0], [0, 1]],
-                [[0, 1], [0, 0]],
+                [0, 0, 0, 0],
+                [0, 0, 0, 1],
+                [0, 1, 0, 0],
             ]
             data_in.append(input_array)
-            yield from self.assign_array(input_array, dut.data_in)
+            yield from cm.assign_array_2d(input_array, dut.data_in)
             yield dut.valid_in.eq(0)
             yield
 
@@ -59,21 +48,21 @@ class Tests(unittest.TestCase):
 
             # valid input for multiple cycles
             input_array = [
-                [[1, 0], [0, 0]],
-                [[1, 1], [1, 1]],
-                [[1, 0], [0, 0]],
+                [1, 0, 0, 0],
+                [1, 1, 1, 1],
+                [1, 0, 0, 0],
             ]
             data_in.append(input_array)
-            yield from self.assign_array(input_array, dut.data_in)
+            yield from cm.assign_array_2d(input_array, dut.data_in)
             yield dut.valid_in.eq(1)
             yield
             input_array = [
-                [[0, 0], [0, 0]],
-                [[0, 1], [0, 0]],
-                [[0, 0], [1, 0]],
+                [0, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
             ]
             data_in.append(input_array)
-            yield from self.assign_array(input_array, dut.data_in)
+            yield from cm.assign_array_2d(input_array, dut.data_in)
             yield
             yield dut.valid_in.eq(0)
             yield
@@ -95,11 +84,11 @@ class Tests(unittest.TestCase):
             data_out = []
             while not sim_finished:
                 if (yield dut.valid_out):
-                    data_out.append((yield from self.yield_array(dut.data_out)))
+                    data_out.append((yield from cm.yield_array(dut.data_out)))
                 yield
             for in_, out_ in zip(data_in, data_out):
                 for ch in range(len(in_)):
-                    reference = max(sum(in_[ch], []))
+                    reference = max(in_[ch])
                     self.assertEqual(reference, out_[ch], f"{in_=}, {out_=}")
 
         sim.add_sync_process(stimuli)
