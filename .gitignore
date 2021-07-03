@@ -7,4 +7,6 @@ __pycache__
 
 notes.txt
 *.gtkw
+*.vcd
 bnn.vhd
+*.v
